@@ -1,21 +1,321 @@
-{% extends 'base.html' %}
-
-{% block title %}Profile - Manajemen Inventori{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Profile Information</h3>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Manajemen Inventori</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 70px;
+        }
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+            padding-top: 70px;
+            background-color: #2c3e50;
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            margin: 0.125rem 0;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link:focus {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+        }
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            z-index: 90;
+            background-color: white;
+            padding: 0.75rem 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+        .sidebar-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .menu-section {
+            padding: 0.5rem 1rem;
+            margin: 0.75rem 0;
+            border-radius: 0.375rem;
+            background-color: rgba(255,255,255,0.05);
+        }
+        .menu-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            color: rgba(255,255,255,0.7);
+        }
+        @media (max-width: 992px) {
+            .sidebar {
+                margin-left: -280px;
+                z-index: 1050;
+            }
+            .sidebar.active {
+                margin-left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-navbar {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5><i class="bi bi-cart-check me-2"></i>Manajemen Inventori</h5>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <!-- Cashier-Only Menu -->
+        {% if user.role == 'cashier' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Cashier Menu</div>
+                <a href="{% url 'summary:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a href="{% url 'sales:pos' %}" class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i> POS
+                </a>
+                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-receipt"></i> Daftar Penjualan
+                </a>
             </div>
-            <div class="card-body">
-                <p><strong>Username:</strong> {{ user.username }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Role:</strong> {{ user.get_role_display }}</p>
-                <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+        {% endif %}
+        
+        <!-- Warehouse Menu -->
+        {% if user.role == 'warehouse' or user.role == 'manager' or user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Gudang</div>
+                <a href="{% url 'summary:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a href="{% url 'inventory:warehouse_list' %}" class="nav-link {% if 'warehouse' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-building"></i> Gudang
+                </a>
+                <a href="{% url 'inventory:stock_list' %}" class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Stok
+                </a>
+                <a href="{% url 'inventory:stock_movement_list' %}" class="nav-link {% if 'stock_movement' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-arrow-left-right"></i> Pergerakan Stok
+                </a>
+                <a href="{% url 'inventory:low_stock_alerts' %}" class="nav-link {% if 'low_stock' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle"></i> Alert Stok Rendah
+                </a>
+                <a href="{% url 'inventory:stock_adjustment' %}" class="nav-link {% if 'stock_adjustment' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-gear"></i> Adjust Stok
+                </a>
+                <a href="{% url 'inventory:reorder_policy_list' %}" class="nav-link {% if 'reorder_policy' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-gear-fill"></i> Kebijakan Reorder
+                </a>
+                <a href="{% url 'purchases:goods_receipt_list' %}" class="nav-link {% if 'goods_receipt' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-truck"></i> Goods Receipt
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Sales Menu -->
+        {% if user.role == 'cashier' or user.role == 'manager' or user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Penjualan</div>
+                <a href="{% url 'sales:pos' %}" class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i> POS
+                </a>
+                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-receipt"></i> Daftar Penjualan
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Purchases Menu -->
+        {% if user.role == 'manager' or user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Pembelian</div>
+                <a href="{% url 'purchases:purchase_order_list' %}" class="nav-link {% if 'purchase_order' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-file-earmark-medical"></i> Purchase Order
+                </a>
+                <a href="{% url 'purchases:goods_receipt_list' %}" class="nav-link {% if 'goods_receipt' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-truck"></i> Goods Receipt
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Master Data Menu -->
+        {% if user.role == 'manager' or user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Master Data</div>
+                <a href="{% url 'master:category_list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-tags"></i> Kategori
+                </a>
+                <a href="{% url 'master:product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-box"></i> Produk
+                </a>
+                <a href="{% url 'master:supplier_list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people"></i> Supplier
+                </a>
+                <a href="{% url 'master:customer_list' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-person"></i> Customer
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Mining Menu -->
+        {% if user.role == 'analyst' or user.role == 'manager' or user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Mining</div>
+                <a href="{% url 'mining:mining_dashboard' %}" class="nav-link {% if 'mining_dashboard' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-graph-up"></i> Dashboard Mining
+                </a>
+                <a href="{% url 'mining:association_rules_list' %}" class="nav-link {% if 'association_rules' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-link-45deg"></i> Aturan Asosiasi
+                </a>
+                <a href="{% url 'mining:mining_run' %}" class="nav-link {% if 'mining_run' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-play-circle"></i> Jalankan Mining
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Admin Menu -->
+        {% if user.role == 'admin' %}
+            <div class="menu-section">
+                <div class="menu-section-title">Admin</div>
+                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                    <i class="bi bi-server"></i> Django Admin
+                </a>
+                <a href="{% url 'accounts:user_list' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people"></i> Manage Users
+                </a>
+            </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <!-- Top Navbar -->
+    <nav class="top-navbar">
+        <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="navbar-text text-dark me-3">
+                <i class="bi bi-person-circle me-1"></i>
+                Hello, {{ user.username }} ({{ user.get_role_display }})
+            </div>
+            <div>
+                <a class="btn btn-outline-primary btn-sm me-2" href="{% url 'accounts:profile' %}">
+                    <i class="bi bi-person me-1"></i> Profile
+                </a>
+                <a class="btn btn-outline-danger btn-sm" href="{% url 'accounts:logout' %}">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid mt-5 pt-4">
+            {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0"><i class="bi bi-person me-2"></i>Profile Information</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Username:</strong> {{ user.username }}</p>
+                                    <p><strong>Email:</strong> {{ user.email }}</p>
+                                    <p><strong>Role:</strong> {{ user.get_role_display }}</p>
+                                    <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+                                    <p><strong>Last Login:</strong> {{ user.last_login|date:"F d, Y H:i" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>First Name:</strong> {{ user.first_name|default:"-" }}</p>
+                                    <p><strong>Last Name:</strong> {{ user.last_name|default:"-" }}</p>
+                                    <p><strong>Is Active:</strong> 
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>Is Staff:</strong> 
+                                        {% if user.is_staff %}
+                                            <span class="badge bg-primary">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="{% url 'summary:dashboard' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Toggle sidebar on mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
