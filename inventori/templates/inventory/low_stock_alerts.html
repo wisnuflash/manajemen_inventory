@@ -21,19 +21,19 @@
             </tr>
         </thead>
         <tbody>
-            {% for alert in rop_alerts %}
+            {% for alert_item in alert_items %}
             <tr>
-                <td>{{ alert.stock.product.name }}</td>
-                <td>{{ alert.stock.warehouse.name }}</td>
-                <td>{{ alert.stock.qty }}</td>
-                <td>{{ alert.stock.product.min_stock }}</td>
-                <td>{{ alert.rop }}</td>
-                <td>{{ alert.reorder_qty }}</td>
+                <td>{{ alert_item.stock.product.name }}</td>
+                <td>{{ alert_item.stock.warehouse.name }}</td>
+                <td>{{ alert_item.stock.qty }}</td>
+                <td>{{ alert_item.stock.product.min_stock }}</td>
+                <td>{{ alert_item.rop }}</td>
+                <td>{{ alert_item.reorder_qty }}</td>
                 <td>
-                    {% if alert.stock.qty <= alert.stock.product.min_stock %}
-                        <span class="badge bg-warning">Stok Rendah</span>
-                    {% elif alert.rop != 'N/A' and alert.stock.qty <= alert.rop %}
-                        <span class="badge bg-danger">Dibawah ROP</span>
+                    {% if alert_item.alert_type == 'Below ROP' %}
+                        <span class="badge bg-danger">{{ alert_item.alert_type }}</span>
+                    {% elif alert_item.alert_type == 'Low Stock' %}
+                        <span class="badge bg-warning">{{ alert_item.alert_type }}</span>
                     {% endif %}
                 </td>
             </tr>

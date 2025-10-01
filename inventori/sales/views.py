@@ -22,8 +22,6 @@ def pos_view(request):
         raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     form = POSForm()
-    sale_items = []
-    total_amount = 0
     
     if request.method == 'POST':
         # Handle POS form submission
@@ -43,10 +41,29 @@ def pos_view(request):
     
     context = {
         'form': form,
-        'sale_items': sale_items,
-        'total_amount': total_amount,
     }
     return render(request, 'sales/pos.html', context)
+
+
+@login_required
+def pos_cancel_sale(request, sale_id):
+    """
+    Cancel and delete a POS sale
+    """
+    # Check if user has permission to access POS
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
+    sale = get_object_or_404(Sale, id=sale_id)
+    
+    # Only allow cancelling DRAFT sales
+    if sale.status != 'DRAFT':
+        messages.error(request, f'Penjualan dengan status {sale.get_status_display()} tidak dapat dibatalkan')
+        return redirect('sales:pos_add_item', sale_id=sale.id)
+    
+    sale.delete()
+    messages.success(request, f'Penjualan dibatalkan dan dihapus')
+    return redirect('sales:pos')
 
 
 @login_required
@@ -61,6 +78,14 @@ def pos_add_item(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     
     if request.method == 'POST':
+        action = request.POST.get('action', 'add_item')
+        
+        if action == 'cancel':
+            # Delete the sale and all related items
+            sale.delete()
+            messages.success(request, f'Penjualan dibatalkan dan dihapus')
+            return redirect('sales:pos')
+        
         form = SaleItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
@@ -113,16 +138,24 @@ def pos_complete_sale(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     
     if request.method == 'POST':
-        with transaction.atomic():
-            # Change status to PAID
-            sale.status = 'PAID'
-            sale.save()
-            
-            # For each item in the sale, update stock and create stock moves
-            for item in sale.items.all():
-                # Update stock
-                update_stock(item.product.id, sale.warehouse.id, -item.qty, 'SALE', sale.id)
-            
+        action = request.POST.get('action', 'complete')
+        
+        if action == 'cancel':
+            # Delete the sale and all related items
+            sale.delete()
+            messages.success(request, f'Penjualan dibatalkan dan dihapus')
+            return redirect('sales:pos')
+        else:
+            with transaction.atomic():
+                # Change status to PAID
+                sale.status = 'PAID'
+                sale.save()
+                
+                # For each item in the sale, update stock and create stock moves
+                for item in sale.items.all():
+                    # Update stock
+                    update_stock(item.product.id, sale.warehouse.id, -item.qty, 'SALE', sale.id)
+                
             messages.success(request, f'Penjualan {sale.invoice_number} berhasil diselesaikan')
             return redirect('sales:sale_detail', pk=sale.id)
     
@@ -168,14 +201,23 @@ def search_product_ajax(request):
     """
     if request.method == 'GET':
         sku = request.GET.get('sku', '')
+        warehouse_id = request.GET.get('warehouse_id', '')
+        
         try:
             product = Product.objects.get(sku=sku, is_active=True)
             # Get the available stock
-            stock = Stock.objects.filter(
-                product=product,
-                warehouse=request.GET.get('warehouse_id')
-            ).first()
-            stock_qty = stock.qty if stock else 0
+            stock_qty = 0
+            if warehouse_id:
+                try:
+                    warehouse_id = int(warehouse_id)
+                    stock = Stock.objects.filter(
+                        product=product,
+                        warehouse_id=warehouse_id
+                    ).first()
+                    stock_qty = stock.qty if stock else 0
+                except (ValueError, TypeError):
+                    # If warehouse_id is not a valid integer, set stock_qty to 0
+                    stock_qty = 0
             
             return JsonResponse({
                 'success': True,

@@ -121,6 +121,11 @@
                 </table>
                 
                 <a href="{% url 'sales:pos_complete' sale.id %}" class="btn btn-success w-100">Selesaikan Penjualan</a>
+                <form method="post" action="{% url 'sales:pos_add_item' sale.id %}" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Apakah Anda yakin ingin membatalkan penjualan ini?')">Batalkan Penjualan</button>
+                </form>
             </div>
         </div>
     </div>
@@ -139,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // When SKU is entered, search for the product
     skuInput.addEventListener('blur', function() {
         const sku = this.value;
-        const warehouseId = document.querySelector('#id_warehouse').value;
+        const warehouseId = {{ sale.warehouse.id }};
         
         if (sku) {
             fetch(`{% url 'sales:search_product_ajax' %}?sku=${sku}&warehouse_id=${warehouseId}`)

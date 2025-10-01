@@ -209,7 +209,7 @@ def low_stock_alerts(request):
     )
     
     # Also check against ROP (Reorder Point) if exists
-    rop_alerts = []
+    alert_items = []
     for stock in low_stocks:
         try:
             rop_policy = ReorderPolicy.objects.get(
@@ -217,17 +217,27 @@ def low_stock_alerts(request):
                 warehouse=stock.warehouse
             )
             if stock.qty <= rop_policy.rop:
-                rop_alerts.append({
+                alert_items.append({
                     'stock': stock,
                     'rop': rop_policy.rop,
-                    'reorder_qty': rop_policy.reorder_qty
+                    'reorder_qty': rop_policy.reorder_qty,
+                    'alert_type': 'Below ROP'
+                })
+            elif stock.qty <= stock.product.min_stock:
+                alert_items.append({
+                    'stock': stock,
+                    'rop': rop_policy.rop,
+                    'reorder_qty': rop_policy.reorder_qty,
+                    'alert_type': 'Low Stock'
                 })
         except ReorderPolicy.DoesNotExist:
-            # If no ROP policy, just show as low stock
-            rop_alerts.append({
-                'stock': stock,
-                'rop': 'N/A',
-                'reorder_qty': 'N/A'
-            })
+            # If no ROP policy but stock is low, just show as low stock
+            if stock.qty <= stock.product.min_stock:
+                alert_items.append({
+                    'stock': stock,
+                    'rop': 'N/A',
+                    'reorder_qty': 'N/A',
+                    'alert_type': 'Low Stock'
+                })
     
-    return render(request, 'inventory/low_stock_alerts.html', {'rop_alerts': rop_alerts})
+    return render(request, 'inventory/low_stock_alerts.html', {'alert_items': alert_items})

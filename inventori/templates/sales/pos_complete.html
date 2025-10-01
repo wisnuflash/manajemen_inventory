@@ -78,7 +78,13 @@
                     {% csrf_token %}
                     <p>Apakah Anda yakin ingin menyelesaikan penjualan ini?</p>
                     <button type="submit" class="btn btn-success">Ya, Selesaikan</button>
+                    <input type="hidden" name="action" value="complete">
                     <a href="{% url 'sales:pos_add_item' sale.id %}" class="btn btn-secondary">Kembali</a>
+                </form>
+                <form method="post" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Apakah Anda yakin ingin membatalkan penjualan ini?')">Batalkan Penjualan</button>
                 </form>
             </div>
         </div>
