@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, F
 from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
 from sales.models import Sale, SaleItem
 from inventory.models import Stock, ReorderPolicy
 from purchases.models import PurchaseOrder
@@ -111,6 +112,10 @@ def dashboard(request):
 @login_required
 def api_top_products(request):
     """API endpoint for top products chart"""
+    # Check if user has permission to access dashboard data
+    if request.user.role not in ['cashier', 'warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     period = request.GET.get('period', 'month')  # month, week, day
     
     today = datetime.now().date()
@@ -148,6 +153,10 @@ def api_top_products(request):
 @login_required
 def api_top_rules(request):
     """API endpoint for top rules chart"""
+    # Check if user has permission to access mining data
+    if request.user.role not in ['analyst', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     top_rules = AssociationRule.objects.order_by('-lift')[:10]
     
     data = []

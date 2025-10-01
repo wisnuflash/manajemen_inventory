@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from .models import AssociationRule
 from .services import run_and_persist, get_top_rules
 
@@ -12,6 +13,10 @@ def mining_run(request):
     """
     Run the Apriori mining algorithm with specified parameters
     """
+    # Check if user has permission to run mining
+    if request.user.role not in ['analyst', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         min_support = float(request.POST.get('min_support', 0.05))
         min_confidence = float(request.POST.get('min_confidence', 0.6))
@@ -46,6 +51,10 @@ def association_rules_list(request):
     """
     List all association rules
     """
+    # Check if user has permission to access association rules
+    if request.user.role not in ['analyst', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     sort_by = request.GET.get('sort_by', 'lift')  # Default sort by lift
     limit = int(request.GET.get('limit', 20))  # Default to 20 rules
     
@@ -94,6 +103,10 @@ def mining_dashboard(request):
     """
     Mining dashboard showing the rules and their metrics
     """
+    # Check if user has permission to access mining dashboard
+    if request.user.role not in ['analyst', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     # Get top 10 rules by lift
     top_rules = get_top_rules(limit=10, sort_by='lift')
     

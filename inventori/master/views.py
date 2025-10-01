@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.core.exceptions import PermissionDenied
 from .models import Category, Product, Supplier, Customer
 from .forms import CategoryForm, ProductForm, SupplierForm, CustomerForm
 
@@ -9,6 +10,10 @@ from .forms import CategoryForm, ProductForm, SupplierForm, CustomerForm
 # Category CRUD
 @login_required
 def category_list(request):
+    # Check if user has permission to access categories
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     categories = Category.objects.all()
     paginator = Paginator(categories, 10)  # Show 10 categories per page
     page_number = request.GET.get('page')
@@ -17,6 +22,10 @@ def category_list(request):
 
 @login_required
 def category_create(request):
+    # Check if user has permission to create categories
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
@@ -29,6 +38,10 @@ def category_create(request):
 
 @login_required
 def category_update(request, pk):
+    # Check if user has permission to update categories
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     category = get_object_or_404(Category, pk=pk)
     if request.method == 'POST':
         form = CategoryForm(request.POST, instance=category)
@@ -42,6 +55,10 @@ def category_update(request, pk):
 
 @login_required
 def category_delete(request, pk):
+    # Check if user has permission to delete categories
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     category = get_object_or_404(Category, pk=pk)
     if request.method == 'POST':
         category.delete()
@@ -53,6 +70,10 @@ def category_delete(request, pk):
 # Product CRUD
 @login_required
 def product_list(request):
+    # Check if user has permission to access products
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     products = Product.objects.select_related('category').all()
     paginator = Paginator(products, 10)  # Show 10 products per page
     page_number = request.GET.get('page')
@@ -61,6 +82,10 @@ def product_list(request):
 
 @login_required
 def product_create(request):
+    # Check if user has permission to create products
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
@@ -73,6 +98,10 @@ def product_create(request):
 
 @login_required
 def product_update(request, pk):
+    # Check if user has permission to update products
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
@@ -86,6 +115,10 @@ def product_update(request, pk):
 
 @login_required
 def product_delete(request, pk):
+    # Check if user has permission to delete products
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         product.delete()
@@ -97,6 +130,10 @@ def product_delete(request, pk):
 # Supplier CRUD
 @login_required
 def supplier_list(request):
+    # Check if user has permission to access suppliers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     suppliers = Supplier.objects.all()
     paginator = Paginator(suppliers, 10)  # Show 10 suppliers per page
     page_number = request.GET.get('page')
@@ -105,6 +142,10 @@ def supplier_list(request):
 
 @login_required
 def supplier_create(request):
+    # Check if user has permission to create suppliers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         form = SupplierForm(request.POST)
         if form.is_valid():
@@ -117,6 +158,10 @@ def supplier_create(request):
 
 @login_required
 def supplier_update(request, pk):
+    # Check if user has permission to update suppliers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == 'POST':
         form = SupplierForm(request.POST, instance=supplier)
@@ -130,6 +175,10 @@ def supplier_update(request, pk):
 
 @login_required
 def supplier_delete(request, pk):
+    # Check if user has permission to delete suppliers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == 'POST':
         supplier.delete()
@@ -141,6 +190,10 @@ def supplier_delete(request, pk):
 # Customer CRUD
 @login_required
 def customer_list(request):
+    # Check if user has permission to access customers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     customers = Customer.objects.all()
     paginator = Paginator(customers, 10)  # Show 10 customers per page
     page_number = request.GET.get('page')
@@ -149,6 +202,10 @@ def customer_list(request):
 
 @login_required
 def customer_create(request):
+    # Check if user has permission to create customers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         form = CustomerForm(request.POST)
         if form.is_valid():
@@ -161,6 +218,10 @@ def customer_create(request):
 
 @login_required
 def customer_update(request, pk):
+    # Check if user has permission to update customers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
         form = CustomerForm(request.POST, instance=customer)
@@ -174,6 +235,10 @@ def customer_update(request, pk):
 
 @login_required
 def customer_delete(request, pk):
+    # Check if user has permission to delete customers
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
         customer.delete()

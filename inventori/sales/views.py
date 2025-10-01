@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 from .models import Sale, SaleItem
 from .forms import POSForm, SaleItemForm
 from master.models import Product
@@ -16,6 +17,10 @@ def pos_view(request):
     """
     POS (Point of Sale) view for cashiers
     """
+    # Check if user has permission to access POS
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     form = POSForm()
     sale_items = []
     total_amount = 0
@@ -49,6 +54,10 @@ def pos_add_item(request, sale_id):
     """
     Add item to POS sale
     """
+    # Check if user has permission to access POS
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     sale = get_object_or_404(Sale, id=sale_id)
     
     if request.method == 'POST':
@@ -97,6 +106,10 @@ def pos_complete_sale(request, sale_id):
     """
     Complete the POS sale (change status to PAID)
     """
+    # Check if user has permission to access POS
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     sale = get_object_or_404(Sale, id=sale_id)
     
     if request.method == 'POST':
@@ -129,6 +142,10 @@ def remove_sale_item(request, item_id):
     """
     Remove an item from the current sale
     """
+    # Check if user has permission to access POS
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     item = get_object_or_404(SaleItem, id=item_id)
     sale_id = item.sale.id
     
@@ -180,12 +197,20 @@ def search_product_ajax(request):
 # Additional views for managing sales
 @login_required
 def sale_list(request):
+    # Check if user has permission to access sales list
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     sales = Sale.objects.all().order_by('-sold_at')
     return render(request, 'sales/sale_list.html', {'sales': sales})
 
 
 @login_required
 def sale_detail(request, pk):
+    # Check if user has permission to access sales
+    if request.user.role not in ['cashier', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     sale = get_object_or_404(Sale, pk=pk)
     sale_items = SaleItem.objects.filter(sale=sale).select_related('product')
     return render(request, 'sales/sale_detail.html', {

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 from .models import PurchaseOrder, POItem, GoodsReceipt
 from .forms import PurchaseOrderForm, POItemForm, GoodsReceiptForm
 from master.models import Product
@@ -12,12 +13,20 @@ from inventory.services import update_stock
 
 @login_required
 def purchase_order_list(request):
+    # Check if user has permission to access purchase orders
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     purchase_orders = PurchaseOrder.objects.all().order_by('-ordered_at')
     return render(request, 'purchases/purchase_order_list.html', {'purchase_orders': purchase_orders})
 
 
 @login_required
 def purchase_order_create(request):
+    # Check if user has permission to create purchase orders
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         form = PurchaseOrderForm(request.POST)
         if form.is_valid():
@@ -126,6 +135,10 @@ def purchase_order_submit(request, pk):
 
 @login_required
 def goods_receipt_list(request):
+    # Check if user has permission to access goods receipts
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     grns = GoodsReceipt.objects.all().order_by('-received_at')
     return render(request, 'purchases/goods_receipt_list.html', {'grns': grns})
 

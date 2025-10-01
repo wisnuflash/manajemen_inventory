@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, F
+from django.core.exceptions import PermissionDenied
 from .models import Warehouse, Stock, StockMove, ReorderPolicy
 from .forms import WarehouseForm, StockForm, StockMoveForm, ReorderPolicyForm
 from master.models import Product
@@ -9,6 +10,10 @@ from master.models import Product
 
 @login_required
 def warehouse_list(request):
+    # Check if user has permission to access warehouses
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     warehouses = Warehouse.objects.all()
     return render(request, 'inventory/warehouse_list.html', {'warehouses': warehouses})
 
@@ -52,6 +57,10 @@ def warehouse_delete(request, pk):
 
 @login_required
 def stock_list(request):
+    # Check if user has permission to access stocks
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     # Get filter parameters
     warehouse_id = request.GET.get('warehouse')
     product_id = request.GET.get('product')
@@ -82,6 +91,10 @@ def stock_adjustment(request):
     """
     Manual stock adjustment view
     """
+    # Check if user has permission to access stock adjustment
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     if request.method == 'POST':
         product_id = request.POST.get('product')
         warehouse_id = request.POST.get('warehouse')
@@ -136,12 +149,20 @@ def stock_adjustment(request):
 
 @login_required
 def stock_movement_list(request):
+    # Check if user has permission to access stock movements
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     movements = StockMove.objects.select_related('product', 'warehouse').all().order_by('-moved_at')
     return render(request, 'inventory/stock_movement_list.html', {'movements': movements})
 
 
 @login_required
 def reorder_policy_list(request):
+    # Check if user has permission to access reorder policies
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     policies = ReorderPolicy.objects.select_related('product', 'warehouse').all()
     return render(request, 'inventory/reorder_policy_list.html', {'policies': policies})
 
@@ -178,6 +199,10 @@ def low_stock_alerts(request):
     """
     Show items with stock levels below minimum or ROP
     """
+    # Check if user has permission to access low stock alerts
+    if request.user.role not in ['warehouse', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
     # Get all stocks that are below the product's minimum stock level
     low_stocks = Stock.objects.select_related('product', 'warehouse').filter(
         Q(qty__lte=0) | Q(qty__lte=models.F('product__min_stock'))
