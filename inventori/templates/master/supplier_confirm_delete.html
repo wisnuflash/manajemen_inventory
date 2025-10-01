@@ -1,0 +1,14 @@
+{% extends 'master/base_master.html' %}
+
+{% block master_title %}Hapus Supplier{% endblock %}
+{% block add_url %}{% url 'master:supplier_list' %}{% endblock %}
+{% block add_button_text %}Kembali ke{% endblock %}
+
+{% block master_content %}
+<form method="post">
+    {% csrf_token %}
+    <p>Apakah Anda yakin ingin menghapus supplier <strong>{{ supplier.name }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+    <a href="{% url 'master:supplier_list' %}" class="btn btn-secondary">Batal</a>
+</form>
+{% endblock %}

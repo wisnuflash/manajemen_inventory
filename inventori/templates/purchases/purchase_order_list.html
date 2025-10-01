@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Purchase Order - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Daftar Purchase Order</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'purchases:purchase_order_create' %}" class="btn btn-sm btn-outline-secondary">Tambah PO</a>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>PO Number</th>
+                <th>Tanggal</th>
+                <th>Supplier</th>
+                <th>Gudang</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for po in purchase_orders %}
+            <tr>
+                <td>{{ po.po_number }}</td>
+                <td>{{ po.ordered_at|date:"d/m/Y" }}</td>
+                <td>{{ po.supplier.name }}</td>
+                <td>{{ po.warehouse.name }}</td>
+                <td>
+                    {% if po.status == 'DRAFT' %}
+                        <span class="badge bg-secondary">{{ po.get_status_display }}</span>
+                    {% elif po.status == 'SENT' %}
+                        <span class="badge bg-primary">{{ po.get_status_display }}</span>
+                    {% elif po.status == 'RECEIVED' %}
+                        <span class="badge bg-success">{{ po.get_status_display }}</span>
+                    {% elif po.status == 'CANCELLED' %}
+                        <span class="badge bg-danger">{{ po.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>Rp {{ po.total_amount|floatformat:0 }}</td>
+                <td>
+                    <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-sm btn-outline-secondary">Detail</a>
+                    {% if po.status == 'DRAFT' %}
+                        <a href="{% url 'purchases:purchase_order_add_item' po.pk %}" class="btn btn-sm btn-outline-primary">Tambah Item</a>
+                        <a href="{% url 'purchases:purchase_order_submit' po.pk %}" class="btn btn-sm btn-outline-success">Kirim</a>
+                    {% elif po.status == 'SENT' %}
+                        <a href="{% url 'purchases:receive_purchase_order' po.pk %}" class="btn btn-sm btn-outline-success">Terima</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">Tidak ada purchase order</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

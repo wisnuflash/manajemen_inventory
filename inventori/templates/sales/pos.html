@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}POS - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Point of Sale (POS)</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Transaksi Baru</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.customer.id_for_label }}" class="form-label">Customer</label>
+                                {{ form.customer }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.warehouse.id_for_label }}" class="form-label">Gudang</label>
+                                {{ form.warehouse }}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mulai Transaksi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ringkasan</h5>
+            </div>
+            <div class="card-body">
+                <p>Invoice: {{ form.initial.invoice_number }}</p>
+                <p>Status: DRAFT</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

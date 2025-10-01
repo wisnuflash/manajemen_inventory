@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Hapus Gudang - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Hapus Gudang</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <p>Apakah Anda yakin ingin menghapus gudang <strong>{{ warehouse.name }}</strong> ({{ warehouse.code }})?</p>
+                    <p class="text-danger">Peringatan: Menghapus gudang akan menghapus semua data stok terkait.</p>
+                    <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+                    <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

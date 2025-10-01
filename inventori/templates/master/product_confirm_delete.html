@@ -1,0 +1,14 @@
+{% extends 'master/base_master.html' %}
+
+{% block master_title %}Hapus Produk{% endblock %}
+{% block add_url %}{% url 'master:product_list' %}{% endblock %}
+{% block add_button_text %}Kembali ke{% endblock %}
+
+{% block master_content %}
+<form method="post">
+    {% csrf_token %}
+    <p>Apakah Anda yakin ingin menghapus produk <strong>{{ product.name }}</strong> ({{ product.sku }})?</p>
+    <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+    <a href="{% url 'master:product_list' %}" class="btn btn-secondary">Batal</a>
+</form>
+{% endblock %}

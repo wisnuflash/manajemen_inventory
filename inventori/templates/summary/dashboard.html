@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Dashboard</h2>
+        <p>Selamat datang di Sistem Manajemen Inventori</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- KPI Cards -->
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Penjualan Hari Ini</h5>
+                <p class="card-text">Rp {{ sales_today|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Penjualan Minggu Ini</h5>
+                <p class="card-text">Rp {{ sales_week|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Penjualan Bulan Ini</h5>
+                <p class="card-text">Rp {{ sales_month|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Nilai Persediaan</h5>
+                <p class="card-text">Rp {{ inventory_value|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Charts -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Produk (Qty) - Bulan Ini</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="topProductsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Rules (Lift/Confidence)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="topRulesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Tables -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Stok Rendah</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Stok</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if low_stock_count > 0 %}
+                            <tr>
+                                <td colspan="2">{{ low_stock_count }} items dengan stok rendah</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="2">Tidak ada stok rendah</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Alert ROP</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Stok</th>
+                            <th>ROP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in rop_alerts %}
+                        <tr>
+                            <td>{{ alert.product }}</td>
+                            <td>{{ alert.current_qty }}</td>
+                            <td>{{ alert.rop }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">Tidak ada alert ROP</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>PO Terbuka</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for po in open_pos %}
+                        <tr>
+                            <td>{{ po.po_number }}</td>
+                            <td>
+                                {% if po.status == 'DRAFT' %}
+                                    <span class="badge bg-secondary">{{ po.get_status_display }}</span>
+                                {% elif po.status == 'SENT' %}
+                                    <span class="badge bg-primary">{{ po.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2">Tidak ada PO terbuka</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize charts with actual data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load top products chart
+        fetch('{% url "summary:api_top_products" %}?period=month')
+            .then(response => response.json())
+            .then(data => {
+                const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+                new Chart(topProductsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.products.map(item => item.name),
+                        datasets: [{
+                            label: 'Jumlah Terjual',
+                            data: data.products.map(item => item.qty),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading top products:', error));
+        
+        // Load top rules chart
+        fetch('{% url "summary:api_top_rules" %}')
+            .then(response => response.json())
+            .then(data => {
+                const topRulesCtx = document.getElementById('topRulesChart').getContext('2d');
+                
+                // Prepare data for both lift and confidence
+                const labels = data.rules.map(rule => rule.rule_text);
+                new Chart(topRulesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Lift',
+                                data: data.rules.map(rule => rule.lift),
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Confidence',
+                                data: data.rules.map(rule => rule.confidence),
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading top rules:', error));
+    });
+</script>
+{% endblock %}

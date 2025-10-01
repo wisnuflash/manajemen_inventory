@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Terima Barang - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Terima Barang dari PO: {{ po.po_number }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Item dalam PO</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>SKU</th>
+                                <th>Jumlah Dipesan</th>
+                                <th>Harga</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in po_items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.product.sku }}</td>
+                                <td>{{ item.qty }}</td>
+                                <td>Rp {{ item.price|floatformat:0 }}</td>
+                                <td>Rp {{ item.get_total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total:</th>
+                                <th>Rp {{ po.total_amount|floatformat:0 }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Pembuatan Goods Receipt</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="grn_number" class="form-label">Nomor GRN</label>
+                        <input type="text" class="form-control" id="grn_number" name="grn_number" value="{{ grn_number }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="warehouse" class="form-label">Gudang</label>
+                        <input type="hidden" name="warehouse" value="{{ po.warehouse.id }}">
+                        <input type="text" class="form-control" value="{{ po.warehouse.name }}" readonly>
+                        <div class="form-text">Barang akan diterima di gudang yang sama dengan PO</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="po_supplier" class="form-label">Supplier</label>
+                        <input type="text" class="form-control" value="{{ po.supplier.name }}" readonly>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Terima Barang ke Gudang</button>
+                </form>
+                
+                <hr>
+                
+                <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary w-100">Kembali ke Detail PO</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

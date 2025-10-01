@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Pergerakan Stok - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Pergerakan Stok</h1>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Produk</th>
+                <th>Gudang</th>
+                <th>Jenis</th>
+                <th>Ref ID</th>
+                <th>Masuk</th>
+                <th>Keluar</th>
+                <th>Tanggal</th>
+                <th>Catatan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movement in movements %}
+            <tr>
+                <td>{{ movement.product.name }}</td>
+                <td>{{ movement.warehouse.name }}</td>
+                <td>
+                    {% if movement.ref_type == 'SALE' %}
+                        <span class="badge bg-danger">{{ movement.get_ref_type_display }}</span>
+                    {% elif movement.ref_type == 'GRN' %}
+                        <span class="badge bg-success">{{ movement.get_ref_type_display }}</span>
+                    {% elif movement.ref_type == 'ADJUST' %}
+                        <span class="badge bg-warning">{{ movement.get_ref_type_display }}</span>
+                    {% elif movement.ref_type == 'TRANSFER' %}
+                        <span class="badge bg-info">{{ movement.get_ref_type_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ movement.ref_id|default:"-" }}</td>
+                <td>{{ movement.qty_in }}</td>
+                <td>{{ movement.qty_out }}</td>
+                <td>{{ movement.moved_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ movement.note|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">Tidak ada pergerakan stok</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

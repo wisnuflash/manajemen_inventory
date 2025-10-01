@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Alert Stok Rendah - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Alert Stok Rendah & ROP</h1>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Produk</th>
+                <th>Gudang</th>
+                <th>Stok Saat Ini</th>
+                <th>Minimal Stok</th>
+                <th>ROP</th>
+                <th>Qty Reorder</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in rop_alerts %}
+            <tr>
+                <td>{{ alert.stock.product.name }}</td>
+                <td>{{ alert.stock.warehouse.name }}</td>
+                <td>{{ alert.stock.qty }}</td>
+                <td>{{ alert.stock.product.min_stock }}</td>
+                <td>{{ alert.rop }}</td>
+                <td>{{ alert.reorder_qty }}</td>
+                <td>
+                    {% if alert.stock.qty <= alert.stock.product.min_stock %}
+                        <span class="badge bg-warning">Stok Rendah</span>
+                    {% elif alert.rop != 'N/A' and alert.stock.qty <= alert.rop %}
+                        <span class="badge bg-danger">Dibawah ROP</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">Tidak ada alert stok rendah</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Tambah Purchase Order - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tambah Purchase Order</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.po_number.id_for_label }}" class="form-label">Nomor PO</label>
+                                {{ form.po_number }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
+                                {{ form.supplier }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.warehouse.id_for_label }}" class="form-label">Gudang</label>
+                                {{ form.warehouse }}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Buat Purchase Order</button>
+                    <a href="{% url 'purchases:purchase_order_list' %}" class="btn btn-secondary">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

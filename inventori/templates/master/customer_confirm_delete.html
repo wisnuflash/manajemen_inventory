@@ -1,0 +1,14 @@
+{% extends 'master/base_master.html' %}
+
+{% block master_title %}Hapus Customer{% endblock %}
+{% block add_url %}{% url 'master:customer_list' %}{% endblock %}
+{% block add_button_text %}Kembali ke{% endblock %}
+
+{% block master_content %}
+<form method="post">
+    {% csrf_token %}
+    <p>Apakah Anda yakin ingin menghapus customer <strong>{{ customer.name }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+    <a href="{% url 'master:customer_list' %}" class="btn btn-secondary">Batal</a>
+</form>
+{% endblock %}

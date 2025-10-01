@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Mining - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard Mining</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'mining:mining_run' %}" class="btn btn-sm btn-outline-secondary">Jalankan Mining</a>
+            <a href="{% url 'mining:association_rules_list' %}" class="btn btn-sm btn-outline-secondary">Lihat Semua Aturan</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Aturan Asosiasi Teratas (berdasarkan Lift)</h5>
+            </div>
+            <div class="card-body">
+                {% if top_rules %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Antecedent</th>
+                                <th>→</th>
+                                <th>Consequent</th>
+                                <th>Support</th>
+                                <th>Confidence</th>
+                                <th>Lift</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rule in top_rules %}
+                            <tr>
+                                <td>{{ rule.get_antecedent_list|join:", " }}</td>
+                                <td>→</td>
+                                <td>{{ rule.get_consequent_list|join:", " }}</td>
+                                <td>{{ rule.support|floatformat:4 }}</td>
+                                <td>{{ rule.confidence|floatformat:4 }}</td>
+                                <td>{{ rule.lift|floatformat:4 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>Belum ada aturan asosiasi. Jalankan algoritma mining terlebih dahulu.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Rekomendasi Produk Terkait</h5>
+            </div>
+            <div class="card-body">
+                <p>Gunakan aturan asosiasi untuk:</p>
+                <ul>
+                    <li>Rekomendasi produk saat POS (saat men-scan item A, rekomendasikan item B)</li>
+                    <li>Penataan produk berdekatan (planogram)</li>
+                    <li>Strategi bundling produk</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Statistik Mining</h5>
+            </div>
+            <div class="card-body">
+                <p>Jumlah total aturan asosiasi: {{ top_rules|length }}</p>
+                <p>Lift tertinggi: 
+                {% if top_rules %}
+                    {{ top_rules.0.lift|floatformat:4 }}
+                {% else %}
+                    -
+                {% endif %}
+                </p>
+                <p>Confidence tertinggi: 
+                {% if top_rules %}
+                    {{ top_rules.0.confidence|floatformat:4 }}
+                {% else %}
+                    -
+                {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

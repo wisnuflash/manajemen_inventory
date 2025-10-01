@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if policy %}Edit{% else %}Tambah{% endif %} Kebijakan Reorder - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% if policy %}Edit{% else %}Tambah{% endif %} Kebijakan Reorder</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.product.id_for_label }}" class="form-label">Produk</label>
+                                {{ form.product }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.warehouse.id_for_label }}" class="form-label">Gudang</label>
+                                {{ form.warehouse }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.avg_daily_demand.id_for_label }}" class="form-label">Demand Harian Rata-rata</label>
+                                {{ form.avg_daily_demand }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.lead_time_days.id_for_label }}" class="form-label">Lead Time (hari)</label>
+                                {{ form.lead_time_days }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.service_level.id_for_label }}" class="form-label">Service Level (%)</label>
+                                {{ form.service_level }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.demand_std.id_for_label }}" class="form-label">Std Deviasi Demand</label>
+                                {{ form.demand_std }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.safety_stock.id_for_label }}" class="form-label">Safety Stock</label>
+                                {{ form.safety_stock }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.rop.id_for_label }}" class="form-label">Reorder Point (ROP)</label>
+                                {{ form.rop }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.reorder_qty.id_for_label }}" class="form-label">Qty Reorder</label>
+                                {{ form.reorder_qty }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <a href="{% url 'inventory:reorder_policy_list' %}" class="btn btn-secondary">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

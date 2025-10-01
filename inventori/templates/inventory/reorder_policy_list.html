@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Kebijakan Reorder - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Kebijakan Reorder (ROP)</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'inventory:reorder_policy_create' %}" class="btn btn-sm btn-outline-secondary">Tambah Kebijakan</a>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Produk</th>
+                <th>Gudang</th>
+                <th>Demand Harian Rata-rata</th>
+                <th>Lead Time (hari)</th>
+                <th>Service Level</th>
+                <th>Safety Stock</th>
+                <th>ROP</th>
+                <th>Reorder Qty</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for policy in policies %}
+            <tr>
+                <td>{{ policy.product.name }}</td>
+                <td>{{ policy.warehouse.name }}</td>
+                <td>{{ policy.avg_daily_demand }}</td>
+                <td>{{ policy.lead_time_days }}</td>
+                <td>{{ policy.service_level }}%</td>
+                <td>{{ policy.safety_stock }}</td>
+                <td>{{ policy.rop }}</td>
+                <td>{{ policy.reorder_qty }}</td>
+                <td>
+                    <a href="{% url 'inventory:reorder_policy_update' policy.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">Tidak ada kebijakan reorder</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

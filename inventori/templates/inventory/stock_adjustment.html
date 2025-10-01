@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Adjust Stok - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Adjust Stok Manual</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="product" class="form-label">Produk</label>
+                                <select name="product" id="product" class="form-select" required>
+                                    <option value="">Pilih Produk</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }} ({{ product.sku }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="warehouse" class="form-label">Gudang</label>
+                                <select name="warehouse" id="warehouse" class="form-select" required>
+                                    <option value="">Pilih Gudang</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="adjustment_type" class="form-label">Jenis Adjustment</label>
+                                <select name="adjustment_type" id="adjustment_type" class="form-select" required>
+                                    <option value="in">Tambah Stok (Masuk)</option>
+                                    <option value="out">Kurangi Stok (Keluar)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="qty" class="form-label">Jumlah</label>
+                                <input type="number" name="qty" id="qty" class="form-control" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Catatan</label>
+                        <textarea name="note" id="note" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Lakukan Adjustment</button>
+                    <a href="{% url 'inventory:stock_list' %}" class="btn btn-secondary">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

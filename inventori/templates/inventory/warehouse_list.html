@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Gudang - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Daftar Gudang</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'inventory:warehouse_create' %}" class="btn btn-sm btn-outline-secondary">Tambah Gudang</a>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Kode</th>
+                <th>Nama</th>
+                <th>Alamat</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for warehouse in warehouses %}
+            <tr>
+                <td>{{ warehouse.code }}</td>
+                <td>{{ warehouse.name }}</td>
+                <td>{{ warehouse.address|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'inventory:warehouse_update' warehouse.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <a href="{% url 'inventory:warehouse_delete' warehouse.pk %}" class="btn btn-sm btn-outline-danger">Hapus</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Tidak ada gudang</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

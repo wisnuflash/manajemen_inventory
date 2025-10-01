@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Tambah Item PO - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tambah Item ke PO: {{ po.po_number }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Add Item Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Tambah Item</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="addItemForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.product_sku.id_for_label }}" class="form-label">SKU Produk</label>
+                            {{ form.product_sku }}
+                            <div class="invalid-feedback" id="sku-error" style="display: none;"></div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.qty.id_for_label }}" class="form-label">Jumlah</label>
+                            {{ form.qty }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.price.id_for_label }}" class="form-label">Harga</label>
+                            {{ form.price }}
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">Tambah ke PO</button>
+                            <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary">Selesai</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Current PO Items -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Item dalam PO</h5>
+            </div>
+            <div class="card-body">
+                {% if po_items %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>SKU</th>
+                                <th>Jumlah</th>
+                                <th>Harga</th>
+                                <th>Total</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in po_items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.product.sku }}</td>
+                                <td>{{ item.qty }}</td>
+                                <td>Rp {{ item.price|floatformat:0 }}</td>
+                                <td>Rp {{ item.get_total|floatformat:0 }}</td>
+                                <td>
+                                    <a href="{% url 'purchases:remove_po_item' item.id %}" class="btn btn-sm btn-outline-danger">Hapus</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total:</th>
+                                <th>Rp {{ total_amount|floatformat:0 }}</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p>Belum ada item dalam PO ini</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Ringkasan PO</h5>
+                <table class="table table-sm">
+                    <tr>
+                        <td>PO Number:</td>
+                        <td>{{ po.po_number }}</td>
+                    </tr>
+                    <tr>
+                        <td>Supplier:</td>
+                        <td>{{ po.supplier.name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Gudang:</td>
+                        <td>{{ po.warehouse.name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Status:</td>
+                        <td>
+                            {% if po.status == 'DRAFT' %}
+                                <span class="badge bg-secondary">{{ po.get_status_display }}</span>
+                            {% elif po.status == 'SENT' %}
+                                <span class="badge bg-primary">{{ po.get_status_display }}</span>
+                            {% elif po.status == 'RECEIVED' %}
+                                <span class="badge bg-success">{{ po.get_status_display }}</span>
+                            {% elif po.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">{{ po.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Total:</td>
+                        <td>Rp {{ total_amount|floatformat:0 }}</td>
+                    </tr>
+                </table>
+                
+                <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary w-100">Kembali ke Detail PO</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
