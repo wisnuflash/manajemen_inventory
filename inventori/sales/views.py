@@ -10,6 +10,26 @@ from .forms import POSForm, SaleItemForm
 from master.models import Product
 from inventory.models import Stock, StockMove
 from inventory.services import update_stock
+import uuid
+from datetime import datetime
+
+
+def generate_unique_invoice_number():
+    """
+    Generate a unique invoice number that doesn't conflict with existing ones
+    """
+    # Try timestamp-based approach first
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    invoice_number = f"INV-{timestamp}"
+    
+    # Check if this invoice number already exists
+    counter = 1
+    original_invoice_number = invoice_number
+    while Sale.objects.filter(invoice_number=invoice_number).exists():
+        invoice_number = f"{original_invoice_number}-{counter:03d}"
+        counter += 1
+    
+    return invoice_number
 
 
 @login_required
@@ -27,20 +47,36 @@ def pos_view(request):
         # Handle POS form submission
         form = POSForm(request.POST)
         if form.is_valid():
+            # Check if there's already a draft sale with the same customer and warehouse
+            existing_draft = Sale.objects.filter(
+                status='DRAFT',
+                customer=form.cleaned_data.get('customer'),
+                warehouse=form.cleaned_data.get('warehouse')
+            ).first()
+            
+            if existing_draft:
+                messages.warning(request, f'Anda sudah memiliki transaksi draft untuk customer dan gudang ini: {existing_draft.invoice_number}. Silakan lanjutkan transaksi tersebut.')
+                return redirect('sales:pos_add_item', sale_id=existing_draft.id)
+            
+            # Generate unique invoice number
+            invoice_number = generate_unique_invoice_number()
+            
             sale = form.save(commit=False)
             sale.status = 'DRAFT'  # Start with DRAFT status
+            sale.invoice_number = invoice_number
             sale.save()
             messages.success(request, f'Sale started with invoice: {sale.invoice_number}')
             return redirect('sales:pos_add_item', sale_id=sale.id)
     else:
-        # Generate new invoice number
-        latest_sale = Sale.objects.order_by('-id').first()
-        next_number = 1 if not latest_sale else latest_sale.id + 1
-        invoice_number = f"INV-{next_number:06d}"
-        form = POSForm(initial={'invoice_number': invoice_number})
+        # Just create an empty form without initial data
+        form = POSForm()
+    
+    # Get existing draft transactions for all users (not just current user)
+    draft_sales = Sale.objects.filter(status='DRAFT').order_by('-id')
     
     context = {
         'form': form,
+        'draft_sales': draft_sales,
     }
     return render(request, 'sales/pos.html', context)
 
