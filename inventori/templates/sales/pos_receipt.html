@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Struk - {{ sale.invoice_number }} - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3>TOKO SERBA ADA</h3>
+                <p class="mb-0">Jl. Raya Utama No. 123</p>
+                <p class="mb-0">Telp: (021) 123-4567</p>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <p><strong>Invoice:</strong> {{ sale.invoice_number }}</p>
+                        <p><strong>Tanggal:</strong> {{ sale.sold_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p><strong>Kasir:</strong> {{ user.username }}</p>
+                        <p><strong>Gudang:</strong> {{ sale.warehouse.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Harga</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale_items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td class="text-center">{{ item.qty }}</td>
+                                <td class="text-end">Rp {{ item.price|floatformat:0 }}</td>
+                                <td class="text-end">Rp {{ item.get_total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">TOTAL:</th>
+                                <th class="text-end">Rp {{ total_amount|floatformat:0 }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p><strong>Terima kasih atas kunjungan Anda!</strong></p>
+                    <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'sales:pos_unified' %}" class="btn btn-primary">Transaksi Baru</a>
+                    <button class="btn btn-outline-secondary" onclick="window.print()">Cetak Struk</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn {
+        display: none !important;
+    }
+    body * {
+        visibility: visible;
+    }
+    .card {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+}
+</style>
+{% endblock %}

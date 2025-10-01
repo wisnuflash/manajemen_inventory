@@ -6,6 +6,9 @@ app_name = 'sales'
 urlpatterns = [
     # POS (Point of Sale) URLs
     path('pos/', views.pos_view, name='pos'),
+    path('pos/unified/', views.pos_unified, name='pos_unified'),
+    path('pos/unified/<int:sale_id>/', views.pos_unified, name='pos_unified'),
+    path('pos/receipt/<int:sale_id>/', views.pos_receipt, name='pos_receipt'),
     path('pos/<int:sale_id>/add-item/', views.pos_add_item, name='pos_add_item'),
     path('pos/<int:sale_id>/complete/', views.pos_complete_sale, name='pos_complete'),
     path('pos/<int:sale_id>/cancel/', views.pos_cancel_sale, name='pos_cancel'),

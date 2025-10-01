@@ -10,44 +10,56 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <h5>Transaksi Baru</h5>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.customer.id_for_label }}" class="form-label">Customer</label>
-                                {{ form.customer }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.warehouse.id_for_label }}" class="form-label">Gudang</label>
-                                {{ form.warehouse }}
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mulai Transaksi</button>
-                </form>
+            <div class="card-body text-center">
+                <h4>Selamat Datang di Point of Sale</h4>
+                <p class="mb-4">Silakan mulai transaksi baru atau lanjutkan transaksi draft</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'sales:pos_unified' %}" class="btn btn-primary btn-lg">Mulai Transaksi Baru</a>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
+        
+        <!-- Draft Transactions -->
+        {% if draft_sales %}
+        <div class="card mt-4">
             <div class="card-header">
-                <h5>Ringkasan</h5>
+                <h5>Transaksi Draft</h5>
             </div>
             <div class="card-body">
-                <p>Invoice: {{ form.initial.invoice_number }}</p>
-                <p>Status: DRAFT</p>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Customer</th>
+                                <th>Gudang</th>
+                                <th>Total</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in draft_sales %}
+                            <tr>
+                                <td>{{ sale.invoice_number }}</td>
+                                <td>{{ sale.customer.name|default:"-" }}</td>
+                                <td>{{ sale.warehouse.name }}</td>
+                                <td>Rp {{ sale.total_amount|floatformat:0 }}</td>
+                                <td>{{ sale.sold_at|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'sales:pos_unified' sale.id %}" class="btn btn-sm btn-outline-primary">Lanjutkan</a>
+                                    <a href="{% url 'sales:pos_cancel' sale.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin ingin membatalkan transaksi ini?')">Batalkan</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

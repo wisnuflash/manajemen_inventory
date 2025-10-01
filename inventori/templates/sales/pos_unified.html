@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}POS - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Point of Sale (POS)</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {% if sale %}
+        <!-- Active Sale Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Transaksi Aktif: {{ sale.invoice_number }}</h5>
+                    <div>
+                        <span class="badge bg-light text-dark">DRAFT</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p><strong>Customer:</strong> {{ sale.customer.name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Gudang:</strong> {{ sale.warehouse.name }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Tanggal:</strong> {{ sale.sold_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <p><strong>Total:</strong> Rp {{ total_amount|floatformat:0 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="row">
+            <!-- Left Column - Product Search and Cart -->
+            <div class="col-md-8">
+                <!-- Product Search -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>{% if sale %}Tambah Item{% else %}Mulai Transaksi Baru{% endif %}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if not sale %}
+                        <!-- Start New Sale Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="create_sale">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <label for="{{ form.customer.id_for_label }}" class="form-label">Customer</label>
+                                        {{ form.customer }}
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <label for="{{ form.warehouse.id_for_label }}" class="form-label">Gudang</label>
+                                        {{ form.warehouse }}
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary w-100">Mulai</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        {% else %}
+                        <!-- Add Item Form -->
+                        <form method="post" id="addItemForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_item">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <label for="product_sku" class="form-label">SKU Produk</label>
+                                        <input type="text" class="form-control" id="product_sku" name="product_sku" placeholder="Scan atau ketik SKU" required>
+                                        <div class="invalid-feedback" id="sku-error" style="display: none;"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="qty" class="form-label">Jumlah</label>
+                                        <input type="number" class="form-control" id="qty" name="qty" value="1" min="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="price" class="form-label">Harga</label>
+                                        <input type="text" class="form-control" id="price" name="price" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary w-100">Tambah</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Shopping Cart -->
+                {% if sale and sale_items %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Keranjang Belanja</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Produk</th>
+                                        <th>SKU</th>
+                                        <th class="text-center">Jumlah</th>
+                                        <th class="text-end">Harga</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in sale_items %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.product.sku }}</td>
+                                        <td class="text-center">{{ item.qty }}</td>
+                                        <td class="text-end">Rp {{ item.price|floatformat:0 }}</td>
+                                        <td class="text-end">Rp {{ item.get_total|floatformat:0 }}</td>
+                                        <td class="text-center">
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="remove_item">
+                                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus item ini dari keranjang?')">Hapus</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total:</th>
+                                        <th class="text-end">Rp {{ total_amount|floatformat:0 }}</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Right Column - Payment and Actions -->
+            <div class="col-md-4">
+                <!-- Payment Section -->
+                {% if sale %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Bayar</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="paymentForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="complete_sale">
+                            <div class="mb-3">
+                                <label for="total_amount" class="form-label">Total Tagihan</label>
+                                <input type="text" class="form-control form-control-lg" id="total_amount" value="Rp {{ total_amount|floatformat:0 }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="total_payment" class="form-label">Jumlah Bayar</label>
+                                <input type="number" class="form-control form-control-lg" id="total_payment" name="total_payment" step="1000" min="{{ total_amount }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="change_amount" class="form-label">Kembalian</label>
+                                <input type="text" class="form-control form-control-lg" id="change_amount" readonly>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 btn-lg">Bayar</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel_sale">
+                            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Batalkan transaksi ini?')">Batalkan Transaksi</button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Draft Transactions -->
+                {% if draft_sales %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Transaksi Draft</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice</th>
+                                        <th>Customer</th>
+                                        <th>Total</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for draft_sale in draft_sales %}
+                                    <tr>
+                                        <td>{{ draft_sale.invoice_number }}</td>
+                                        <td>{{ draft_sale.customer.name|default:"-"|truncatechars:10 }}</td>
+                                        <td>Rp {{ draft_sale.total_amount|floatformat:0 }}</td>
+                                        <td>
+                                            <a href="{% url 'sales:pos_unified' draft_sale.id %}" class="btn btn-sm btn-outline-primary">Lanjutkan</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Payment calculation
+    const totalPaymentInput = document.getElementById('total_payment');
+    const changeAmountInput = document.getElementById('change_amount');
+    const totalAmount = {{ total_amount|default:0 }};
+    
+    if (totalPaymentInput && changeAmountInput) {
+        totalPaymentInput.addEventListener('input', function() {
+            const payment = parseFloat(this.value) || 0;
+            const change = payment - totalAmount;
+            changeAmountInput.value = 'Rp ' + change.toLocaleString('id-ID');
+            
+            if (change < 0) {
+                changeAmountInput.classList.add('text-danger');
+            } else {
+                changeAmountInput.classList.remove('text-danger');
+            }
+        });
+    }
+    
+    // Product search functionality
+    const skuInput = document.getElementById('product_sku');
+    const priceInput = document.getElementById('price');
+    const qtyInput = document.getElementById('qty');
+    const addItemForm = document.getElementById('addItemForm');
+    const errorDiv = document.getElementById('sku-error');
+    
+    if (skuInput && priceInput && addItemForm) {
+        // When SKU is entered, search for the product
+        skuInput.addEventListener('blur', function() {
+            const sku = this.value.trim();
+            const warehouseId = {{ sale.warehouse.id }};
+            
+            if (sku) {
+                fetch(`{% url 'sales:search_product_ajax' %}?sku=${encodeURIComponent(sku)}&warehouse_id=${warehouseId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Fill in the price
+                            priceInput.value = 'Rp ' + parseFloat(data.price).toLocaleString('id-ID');
+                            errorDiv.style.display = 'none';
+                            qtyInput.focus();
+                        } else {
+                            errorDiv.textContent = data.error;
+                            errorDiv.style.display = 'block';
+                            priceInput.value = '';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        errorDiv.textContent = 'Terjadi kesalahan saat mencari produk';
+                        errorDiv.style.display = 'block';
+                    });
+            }
+        });
+        
+        // When form is submitted, validate SKU
+        addItemForm.addEventListener('submit', function(e) {
+            const sku = skuInput.value.trim();
+            if (!sku) {
+                e.preventDefault();
+                errorDiv.textContent = 'SKU produk harus diisi';
+                errorDiv.style.display = 'block';
+                skuInput.focus();
+                return;
+            }
+            
+            if (errorDiv.style.display === 'block') {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
