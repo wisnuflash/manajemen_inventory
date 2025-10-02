@@ -205,7 +205,7 @@ def low_stock_alerts(request):
         
     # Get all stocks that are below the product's minimum stock level
     low_stocks = Stock.objects.select_related('product', 'warehouse').filter(
-        Q(qty__lte=0) | Q(qty__lte=models.F('product__min_stock'))
+        Q(qty__lte=0) | Q(qty__lte=F('product__min_stock'))
     )
     
     # Also check against ROP (Reorder Point) if exists
