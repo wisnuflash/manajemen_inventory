@@ -1,2 +1,3 @@
 .venv
 .venv/*
+inventori/db.sqlite3
