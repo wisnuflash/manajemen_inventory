@@ -9,10 +9,10 @@
     <table class="table table-striped table-sm">
         <thead>
             <tr>
-                <th>SKU</th>
+                <th>Kode Barang</th>
                 <th>Nama</th>
+                <th>Merek</th>
                 <th>Kategori</th>
-                <th>UOM</th>
                 <th>Harga</th>
                 <th>Min Stok</th>
                 <th>Aktif</th>
@@ -24,8 +24,8 @@
             <tr>
                 <td>{{ product.sku }}</td>
                 <td>{{ product.name }}</td>
-                <td>{{ product.category.name|default:"-" }}</td>
                 <td>{{ product.uom }}</td>
+                <td>{{ product.category.name|default:"-" }}</td>
                 <td>Rp {{ product.price }}</td>
                 <td>{{ product.min_stock }}</td>
                 <td>

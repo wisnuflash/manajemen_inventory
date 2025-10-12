@@ -21,6 +21,7 @@
             </tr>
         </thead>
         <tbody>
+            {% load humanize %}
             {% for sale in sales %}
             <tr>
                 <td>{{ sale.invoice_number }}</td>
@@ -36,7 +37,7 @@
                         <span class="badge bg-danger">{{ sale.get_status_display }}</span>
                     {% endif %}
                 </td>
-                <td>Rp {{ sale.total_amount|floatformat:0 }}</td>
+                <td>Rp {{ sale.total_amount|floatformat:0|intcomma }}</td>
                 <td>
                     <a href="{% url 'sales:sale_detail' sale.pk %}" class="btn btn-sm btn-outline-secondary">Detail</a>
                 </td>

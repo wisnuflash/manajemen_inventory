@@ -24,6 +24,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
+                    {% load humanize %}
                     <div class="col-md-3">
                         <p><strong>Customer:</strong> {{ sale.customer.name|default:"-" }}</p>
                     </div>
@@ -34,7 +35,7 @@
                         <p><strong>Tanggal:</strong> {{ sale.sold_at|date:"d/m/Y H:i" }}</p>
                     </div>
                     <div class="col-md-3 text-end">
-                        <p><strong>Total:</strong> Rp {{ total_amount|floatformat:0 }}</p>
+                        <p><strong>Total:</strong> Rp {{ total_amount|floatformat:0|intcomma }}</p>
                     </div>
                 </div>
             </div>
@@ -138,8 +139,8 @@
                                         <td>{{ item.product.name }}</td>
                                         <td>{{ item.product.sku }}</td>
                                         <td class="text-center">{{ item.qty }}</td>
-                                        <td class="text-end">Rp {{ item.price|floatformat:0 }}</td>
-                                        <td class="text-end">Rp {{ item.get_total|floatformat:0 }}</td>
+                                        <td class="text-end">Rp {{ item.price|floatformat:0|intcomma }}</td>
+                                        <td class="text-end">Rp {{ item.get_total|floatformat:0|intcomma }}</td>
                                         <td class="text-center">
                                             <form method="post" class="d-inline">
                                                 {% csrf_token %}
@@ -154,7 +155,7 @@
                                 <tfoot>
                                     <tr>
                                         <th colspan="4" class="text-end">Total:</th>
-                                        <th class="text-end">Rp {{ total_amount|floatformat:0 }}</th>
+                                        <th class="text-end">Rp {{ total_amount|floatformat:0|intcomma }}</th>
                                         <th></th>
                                     </tr>
                                 </tfoot>
@@ -179,7 +180,7 @@
                             <input type="hidden" name="action" value="complete_sale">
                             <div class="mb-3">
                                 <label for="total_amount" class="form-label">Total Tagihan</label>
-                                <input type="text" class="form-control form-control-lg" id="total_amount" value="Rp {{ total_amount|floatformat:0 }}" readonly>
+                                <input type="text" class="form-control form-control-lg" id="total_amount" value="Rp {{ total_amount|floatformat:0|intcomma }}" readonly>
                             </div>
                             <div class="mb-3">
                                 <label for="total_payment" class="form-label">Jumlah Bayar</label>
@@ -228,7 +229,7 @@
                                     <tr>
                                         <td>{{ draft_sale.invoice_number }}</td>
                                         <td>{{ draft_sale.customer.name|default:"-"|truncatechars:10 }}</td>
-                                        <td>Rp {{ draft_sale.total_amount|floatformat:0 }}</td>
+                                        <td>Rp {{ draft_sale.total_amount|floatformat:0|intcomma }}</td>
                                         <td>
                                             <a href="{% url 'sales:pos_unified' draft_sale.id %}" class="btn btn-sm btn-outline-primary">Lanjutkan</a>
                                         </td>
@@ -274,24 +275,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const qtyInput = document.getElementById('qty');
     const addItemForm = document.getElementById('addItemForm');
     const errorDiv = document.getElementById('sku-error');
-    
+
+    // helper: create suggestion box
+    function createSuggestionBox() {
+        let box = document.getElementById('product-suggestions');
+        if (!box) {
+            box = document.createElement('ul');
+            box.id = 'product-suggestions';
+            box.className = 'list-group position-absolute';
+            box.style.zIndex = 1000;
+            box.style.width = skuInput.offsetWidth + 'px';
+            box.style.maxHeight = '200px';
+            box.style.overflowY = 'auto';
+            skuInput.parentNode.style.position = 'relative';
+            skuInput.parentNode.appendChild(box);
+        }
+        return box;
+    }
+
+    // helper: clear suggestion box
+    function clearSuggestions() {
+        const box = document.getElementById('product-suggestions');
+        if (box) box.innerHTML = '';
+    }
+
     if (skuInput && priceInput && addItemForm) {
-        // When SKU is entered, search for the product
+        const warehouseId = {{ sale.warehouse.id }};
+        const endpoint = `{% url 'sales:search_product_ajax' %}`;
+
+        // Debounce helper
+        let debounceTimer;
+        function debounce(fn, delay = 300) {
+            return function(...args) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        // When SKU/name is entered and loses focus, search for the product (SKU exact)
         skuInput.addEventListener('blur', function() {
-            const sku = this.value.trim();
-            const warehouseId = {{ sale.warehouse.id }};
-            
-            if (sku) {
-                fetch(`{% url 'sales:search_product_ajax' %}?sku=${encodeURIComponent(sku)}&warehouse_id=${warehouseId}`)
+            // small timeout so click on suggestion registers before clearing
+            setTimeout(clearSuggestions, 150);
+            const val = this.value.trim();
+            if (!val) return;
+            // If it's likely a SKU (no spaces and short), do exact SKU lookup
+            if (/^\S+$/.test(val) && val.length <= 30) {
+                fetch(`${endpoint}?sku=${encodeURIComponent(val)}&warehouse_id=${warehouseId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Fill in the price
+                            // single product response
                             priceInput.value = 'Rp ' + parseFloat(data.price).toLocaleString('id-ID');
                             errorDiv.style.display = 'none';
                             qtyInput.focus();
                         } else {
-                            errorDiv.textContent = data.error;
+                            errorDiv.textContent = data.error || 'Produk tidak ditemukan';
                             errorDiv.style.display = 'block';
                             priceInput.value = '';
                         }
@@ -303,8 +341,60 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
         });
-        
-        // When form is submitted, validate SKU
+
+        // Live search by product name (shows suggestions)
+        const searchByName = debounce(function() {
+            const q = skuInput.value.trim();
+            clearSuggestions();
+            if (!q || q.length < 2) {
+                errorDiv.style.display = 'none';
+                return;
+            }
+
+            // If user typed something that looks like a name (contains space or letters)
+            if (/\s/.test(q) || /[a-zA-Z]/.test(q)) {
+                fetch(`${endpoint}?q=${encodeURIComponent(q)}&warehouse_id=${warehouseId}&search_by=name`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const box = createSuggestionBox();
+                        box.innerHTML = '';
+                        if (data.success && Array.isArray(data.products) && data.products.length) {
+                            errorDiv.style.display = 'none';
+                            data.products.forEach(prod => {
+                                const li = document.createElement('li');
+                                li.className = 'list-group-item list-group-item-action';
+                                li.style.cursor = 'pointer';
+                                li.textContent = `${prod.name} — ${prod.sku} — Rp ${parseFloat(prod.price).toLocaleString('id-ID')}`;
+                                li.addEventListener('click', function() {
+                                    skuInput.value = prod.sku;
+                                    priceInput.value = 'Rp ' + parseFloat(prod.price).toLocaleString('id-ID');
+                                    qtyInput.focus();
+                                    clearSuggestions();
+                                });
+                                box.appendChild(li);
+                            });
+                        } else {
+                            // optional: show no results indicator
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item text-muted';
+                            li.textContent = 'Tidak ada produk ditemukan';
+                            box.appendChild(li);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                    });
+            }
+        }, 300);
+
+        skuInput.addEventListener('input', function() {
+            // hide previous errors when typing
+            errorDiv.style.display = 'none';
+            // Trigger name search
+            searchByName();
+        });
+
+        // When form is submitted, validate SKU (ensure we have a SKU)
         addItemForm.addEventListener('submit', function(e) {
             const sku = skuInput.value.trim();
             if (!sku) {
@@ -314,10 +404,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 skuInput.focus();
                 return;
             }
-            
             if (errorDiv.style.display === 'block') {
                 e.preventDefault();
             }
+        });
+
+        // click outside closes suggestions
+        document.addEventListener('click', function(ev) {
+            if (!skuInput.parentNode.contains(ev.target)) {
+                clearSuggestions();
+            }
+        });
+
+        // adjust suggestion box width on window resize
+        window.addEventListener('resize', function() {
+            const box = document.getElementById('product-suggestions');
+            if (box) box.style.width = skuInput.offsetWidth + 'px';
         });
     }
 });

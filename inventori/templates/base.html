@@ -186,7 +186,7 @@
             <div class="menu-section">
                 <div class="menu-section-title">Penjualan</div>
                 <a href="{% url 'sales:pos' %}" class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-cash-stack"></i> POS
+                    <i class="bi bi-cash-stack"></i> Transaksi
                 </a>
                 <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-receipt"></i> Daftar Penjualan

@@ -150,12 +150,12 @@ def api_top_products(request):
     return JsonResponse({'products': data})
 
 
-@login_required
+# @login_required
 def api_top_rules(request):
     """API endpoint for top rules chart"""
     # Check if user has permission to access mining data
-    if request.user.role not in ['analyst', 'manager', 'admin']:
-        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+    # if request.user.role not in ['analyst', 'manager', 'admin']:
+    #     raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     top_rules = AssociationRule.objects.order_by('-lift')[:10]
     

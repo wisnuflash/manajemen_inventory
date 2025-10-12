@@ -26,20 +26,21 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% load humanize %}
                             {% for item in po_items %}
                             <tr>
                                 <td>{{ item.product.name }}</td>
                                 <td>{{ item.product.sku }}</td>
                                 <td>{{ item.qty }}</td>
-                                <td>Rp {{ item.price|floatformat:0 }}</td>
-                                <td>Rp {{ item.get_total|floatformat:0 }}</td>
+                                <td>Rp {{ item.price|floatformat:0|intcomma }}</td>
+                                <td>Rp {{ item.get_total|floatformat:0|intcomma }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot>
                             <tr>
                                 <th colspan="4" class="text-end">Total:</th>
-                                <th>Rp {{ po.total_amount|floatformat:0 }}</th>
+                                <th>Rp {{ po.total_amount|floatformat:0|intcomma }}</th>
                             </tr>
                         </tfoot>
                     </table>

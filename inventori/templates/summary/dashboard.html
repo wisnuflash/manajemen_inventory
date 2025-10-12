@@ -15,32 +15,36 @@
     <div class="col-md-3">
         <div class="card text-white bg-primary mb-3">
             <div class="card-body">
+                {% load humanize %}
                 <h5 class="card-title">Penjualan Hari Ini</h5>
-                <p class="card-text">Rp {{ sales_today|floatformat:0 }}</p>
+                <p class="card-text">Rp {{ sales_today|floatformat:0|intcomma }}</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-white bg-success mb-3">
             <div class="card-body">
+                {% load humanize %}
                 <h5 class="card-title">Penjualan Minggu Ini</h5>
-                <p class="card-text">Rp {{ sales_week|floatformat:0 }}</p>
+                <p class="card-text">Rp {{ sales_week|floatformat:0|intcomma }}</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-white bg-info mb-3">
             <div class="card-body">
+                {% load humanize %}
                 <h5 class="card-title">Penjualan Bulan Ini</h5>
-                <p class="card-text">Rp {{ sales_month|floatformat:0 }}</p>
+                <p class="card-text">Rp {{ sales_month|floatformat:0|intcomma }}</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-white bg-warning mb-3">
             <div class="card-body">
+                {% load humanize %}
                 <h5 class="card-title">Nilai Persediaan</h5>
-                <p class="card-text">Rp {{ inventory_value|floatformat:0 }}</p>
+                <p class="card-text">Rp {{ inventory_value|floatformat:0|intcomma }}</p>
             </div>
         </div>
     </div>

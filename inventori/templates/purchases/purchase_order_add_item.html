@@ -60,14 +60,15 @@
                                 <th>Aksi</th>
                             </tr>
                         </thead>
+                        {% load humanize %}
                         <tbody>
                             {% for item in po_items %}
                             <tr>
                                 <td>{{ item.product.name }}</td>
                                 <td>{{ item.product.sku }}</td>
                                 <td>{{ item.qty }}</td>
-                                <td>Rp {{ item.price|floatformat:0 }}</td>
-                                <td>Rp {{ item.get_total|floatformat:0 }}</td>
+                                <td>Rp {{ item.price|floatformat:0|intcomma }}</td>
+                                <td>Rp {{ item.get_total|floatformat:0|intcomma }}</td>
                                 <td>
                                     <a href="{% url 'purchases:remove_po_item' item.id %}" class="btn btn-sm btn-outline-danger">Hapus</a>
                                 </td>
@@ -75,9 +76,10 @@
                             {% endfor %}
                         </tbody>
                         <tfoot>
+                            {% load humanize %}
                             <tr>
                                 <th colspan="4" class="text-end">Total:</th>
-                                <th>Rp {{ total_amount|floatformat:0 }}</th>
+                                <th>Rp {{ total_amount|floatformat:0|intcomma }}</th>
                                 <th></th>
                             </tr>
                         </tfoot>
@@ -123,7 +125,7 @@
                     </tr>
                     <tr>
                         <td>Total:</td>
-                        <td>Rp {{ total_amount|floatformat:0 }}</td>
+                        <td>Rp {{ total_amount|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
                 

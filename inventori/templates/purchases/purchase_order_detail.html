@@ -38,34 +38,37 @@
                                 {% endif %}
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for item in po_items %}
-                            <tr>
-                                <td>{{ item.product.name }}</td>
-                                <td>{{ item.product.sku }}</td>
-                                <td>{{ item.qty }}</td>
-                                <td>Rp {{ item.price|floatformat:0 }}</td>
-                                <td>Rp {{ item.get_total|floatformat:0 }}</td>
-                                {% if po.status == 'DRAFT' %}
-                                <td>
+                        {% load humanize %}
+                                                <tbody>
+                                                    {% for item in po_items %}
+                                                    <tr>
+                                                        <td>{{ item.product.name }}</td>
+                                                        <td>{{ item.product.sku }}</td>
+                                                        <td>{{ item.qty|intcomma }}</td>
+                                                        <td>Rp {{ item.price|floatformat:0|intcomma }}</td>
+                                                        <td>Rp {{ item.get_total|floatformat:0|intcomma }}</td>
+                                                        {% if po.status == 'DRAFT' %}
+                                                        <td>
                                     <a href="{% url 'purchases:remove_po_item' item.id %}" class="btn btn-sm btn-outline-danger">Hapus</a>
                                 </td>
                                 {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
+                        {% load humanize %}
                         <tfoot>
-                            <tr>
-                                <th colspan="{{ po.status == 'DRAFT' and 4 or 3 }}" class="text-end">Total:</th>
-                                <th>Rp {{ total_amount|floatformat:0 }}</th>
-                                {% if po.status == 'DRAFT' %}
-                                <th></th>
-                                {% endif %}
-                            </tr>
+                        <tr>
+                            <th colspan="{% if po.status == 'DRAFT' %}4{% else %}3{% endif %}" class="text-end">Total:</th>
+                            <th>Rp {{ total_amount|floatformat:0|intcomma }}</th>
+                            {% if po.status == 'DRAFT' %}
+                            <th></th>
+                            {% endif %}
+                        </tr>
                         </tfoot>
+
                     </table>
                 </div>
-            </div>
+            </div>  
         </div>
     </div>
     
