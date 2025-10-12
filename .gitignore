@@ -1,3 +1,4 @@
 .venv
 .venv/*
 inventori/db.sqlite3
+*.pyc
