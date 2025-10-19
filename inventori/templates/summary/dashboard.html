@@ -444,55 +444,80 @@ function loadTopRules() {
                 topRulesChart.destroy();
             }
             
+            // For association rules, show lift values as a horizontal bar chart
+            // with rule text as labels (shortened to prevent overcrowding)
+            const ruleLabels = data.rules.map(rule => rule.short_rule || rule.rule_text);
+            const liftValues = data.rules.map(rule => rule.lift);
+            const confidenceValues = data.rules.map(rule => rule.confidence * 100); // Convert to percentage
+            
             topRulesChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.rules.map(rule => rule.rule_text),
+                    labels: ruleLabels,
                     datasets: [
                         {
                             label: 'Lift',
-                            data: data.rules.map(rule => rule.lift),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            data: liftValues,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
                             borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 2,
-                            borderRadius: 5
+                            borderWidth: 1,
+                            borderRadius: 3
                         },
                         {
-                            label: 'Confidence',
-                            data: data.rules.map(rule => rule.confidence),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            label: 'Confidence (%)',
+                            data: confidenceValues,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 2,
-                            borderRadius: 5
+                            borderWidth: 1,
+                            borderRadius: 3
                         }
                     ]
                 },
                 options: {
+                    indexAxis: 'y', // Horizontal bar chart
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 15
-                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12
+                            padding: 12,
+                            callbacks: {
+                                title: function(context) {
+                                    const rule = data.rules[context[0].dataIndex];
+                                    return rule.rule_text;
+                                },
+                                label: function(context) {
+                                    const rule = data.rules[context.dataIndex];
+                                    if (context.datasetIndex === 0) { // Lift dataset
+                                        return `Lift: ${rule.lift.toFixed(2)} (higher is better)`;
+                                    } else { // Confidence dataset
+                                        return `Confidence: ${(rule.confidence * 100).toFixed(2)}%`;
+                                    }
+                                }
+                            }
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            },
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.05)'
                             }
                         },
-                        x: {
+                        y: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 10 // Limit number of labels to prevent overcrowding
                             }
                         }
                     }

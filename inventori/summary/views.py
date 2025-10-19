@@ -1,4 +1,4 @@
-3 from django.shortcuts import render
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, F
 from django.http import JsonResponse
@@ -232,24 +232,28 @@ def api_top_products(request):
     return JsonResponse({'products': data})
 
 
-# @login_required
+@login_required
 def api_top_rules(request):
     """API endpoint for top rules chart"""
     # Check if user has permission to access mining data
-    # if request.user.role not in ['analyst', 'manager', 'admin']:
-    #     raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+    if request.user.role not in ['analyst', 'manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     top_rules = AssociationRule.objects.order_by('-lift')[:10]
     
     data = []
     for rule in top_rules:
+        antecedent_list = rule.get_antecedent_list()
+        consequent_list = rule.get_consequent_list()
         data.append({
-            'antecedent': rule.get_antecedent_list(),
-            'consequent': rule.get_consequent_list(),
+            'antecedent': antecedent_list,
+            'consequent': consequent_list,
             'support': float(rule.support),
             'confidence': float(rule.confidence),
             'lift': float(rule.lift),
-            'rule_text': f"{', '.join(rule.get_antecedent_list())} → {', '.join(rule.get_consequent_list())}"
+            'rule_text': f"{', '.join(antecedent_list)} → {', '.join(consequent_list)}",
+            # Create a shorter version for chart labels to avoid overcrowding
+            'short_rule': f"{antecedent_list[0] if antecedent_list else 'N/A'} → {consequent_list[0] if consequent_list else 'N/A'}"
         })
     
     return JsonResponse({'rules': data})
