@@ -7,7 +7,10 @@
     <h1 class="h2">Stok Gudang</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <a href="{% url 'inventory:stock_adjustment' %}" class="btn btn-sm btn-outline-secondary">Adjust Stok</a>
+            <a href="{% url 'inventory:stock_adjustment' %}" class="btn btn-sm btn-outline-primary">Adjust Stok</a>
+        </div>
+        <div class="btn-group me-2">
+            <a href="{% url 'inventory:stock_movement_list' %}" class="btn btn-sm btn-outline-secondary bi bi-arrow-eft-right">Pergerakan Stok</a>
         </div>
     </div>
 </div>

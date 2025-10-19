@@ -20,13 +20,14 @@
             </tr>
         </thead>
         <tbody>
+            {% load humanize %}
             {% for product in page_obj %}
             <tr>
                 <td>{{ product.sku }}</td>
                 <td>{{ product.name }}</td>
                 <td>{{ product.uom }}</td>
                 <td>{{ product.category.name|default:"-" }}</td>
-                <td>Rp {{ product.price }}</td>
+                <td>Rp {{ product.price|floatformat:0|intcomma }}</td>
                 <td>{{ product.min_stock }}</td>
                 <td>
                     {% if product.is_active %}

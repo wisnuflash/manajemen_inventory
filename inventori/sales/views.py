@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from django.db.models import Q
 from django.core.exceptions import PermissionDenied
 from .models import Sale, SaleItem
 from .forms import POSForm, SaleItemForm
@@ -412,9 +413,43 @@ def sale_list(request):
     # Check if user has permission to access sales list
     if request.user.role not in ['cashier', 'manager', 'admin']:
         raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
-        
-    sales = Sale.objects.all().order_by('-sold_at')
-    return render(request, 'sales/sale_list.html', {'sales': sales})
+    
+    query = request.GET.get('q', '').strip()
+    start_date_param = request.GET.get('start_date')
+    end_date_param = request.GET.get('end_date')
+    
+    sales = (Sale.objects
+             .select_related('customer', 'warehouse')
+             .order_by('-sold_at'))
+    
+    if query:
+        sales = sales.filter(
+            Q(invoice_number__icontains=query) |
+            Q(customer__name__icontains=query) |
+            Q(warehouse__name__icontains=query)
+        )
+    
+    if start_date_param:
+        try:
+            start_date = datetime.strptime(start_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__gte=start_date)
+        except ValueError:
+            start_date_param = ''
+    
+    if end_date_param:
+        try:
+            end_date = datetime.strptime(end_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__lte=end_date)
+        except ValueError:
+            end_date_param = ''
+    
+    context = {
+        'sales': sales,
+        'q': query,
+        'start_date': start_date_param or '',
+        'end_date': end_date_param or '',
+    }
+    return render(request, 'sales/sale_list.html', context)
 
 
 @login_required

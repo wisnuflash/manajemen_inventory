@@ -153,31 +153,31 @@
         <!-- Warehouse Menu -->
         {% if user.role == 'warehouse' or user.role == 'manager' or user.role == 'admin' %}
             <div class="menu-section">
-                <div class="menu-section-title">Gudang</div>
+                <div class="menu-section-title">Dashboard</div>
                 <a href="{% url 'summary:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
-                <a href="{% url 'inventory:warehouse_list' %}" class="nav-link {% if 'warehouse' in request.resolver_match.url_name %}active{% endif %}">
+                <!-- <a href="{% url 'inventory:warehouse_list' %}" class="nav-link {% if 'warehouse' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-building"></i> Gudang
-                </a>
-                <a href="{% url 'inventory:stock_list' %}" class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}">
+                </a> -->
+                <!-- <a href="{% url 'inventory:stock_list' %}" class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-box-seam"></i> Stok
-                </a>
-                <a href="{% url 'inventory:stock_movement_list' %}" class="nav-link section-item {% if 'stock_movement' in request.resolver_match.url_name %}active{% endif %}">
+                </a> -->
+                <!-- <a href="{% url 'inventory:stock_movement_list' %}" class="nav-link section-item {% if 'stock_movement' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-arrow-left-right"></i> Pergerakan Stok
-                </a>
-                <a href="{% url 'inventory:low_stock_alerts' %}" class="nav-link section-item {% if 'low_stock' in request.resolver_match.url_name %}active{% endif %}">
+                </a> -->
+                <a href="{% url 'inventory:low_stock_alerts' %}" class="nav-link  {% if 'low_stock' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-exclamation-triangle"></i> Alert Stok Rendah
                 </a>
-                <a href="{% url 'inventory:stock_adjustment' %}" class="nav-link section-item {% if 'stock_adjustment' in request.resolver_match.url_name %}active{% endif %}">
+                <!-- <a href="{% url 'inventory:stock_adjustment' %}" class="nav-link section-item {% if 'stock_adjustment' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-gear"></i> Adjust Stok
-                </a>
-                <a href="{% url 'inventory:reorder_policy_list' %}" class="nav-link section-item {% if 'reorder_policy' in request.resolver_match.url_name %}active{% endif %}">
+                </a> -->
+                <!-- <a href="{% url 'inventory:reorder_policy_list' %}" class="nav-link section-item {% if 'reorder_policy' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-gear-fill"></i> Kebijakan Reorder
-                </a>
-                <a href="{% url 'purchases:goods_receipt_list' %}" class="nav-link section-item {% if 'goods_receipt' in request.resolver_match.url_name %}active{% endif %}">
+                </a> -->
+                <!-- <a href="{% url 'purchases:goods_receipt_list' %}" class="nav-link section-item {% if 'goods_receipt' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-truck"></i> Goods Receipt
-                </a>
+                </a> -->
             </div>
         {% endif %}
         
@@ -211,6 +211,12 @@
         {% if user.role == 'manager' or user.role == 'admin' %}
             <div class="menu-section">
                 <div class="menu-section-title">Master Data</div>
+                <a href="{% url 'inventory:warehouse_list' %}" class="nav-link {% if 'warehouse' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-building"></i> Gudang
+                </a>
+                <a href="{% url 'inventory:stock_list' %}" class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Stok
+                </a>
                 <a href="{% url 'master:category_list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-tags"></i> Kategori
                 </a>
@@ -246,9 +252,9 @@
         {% if user.role == 'admin' %}
             <div class="menu-section">
                 <div class="menu-section-title">Admin</div>
-                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                <!-- <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
                     <i class="bi bi-server"></i> Django Admin
-                </a>
+                </a> -->
                 <a href="{% url 'accounts:user_list' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-people"></i> Manage Users
                 </a>

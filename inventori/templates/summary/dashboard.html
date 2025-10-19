@@ -3,171 +3,347 @@
 {% block title %}Dashboard - Manajemen Inventori{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2>Dashboard</h2>
-        <p>Selamat datang di Sistem Manajemen Inventori</p>
-    </div>
-</div>
-
-<div class="row">
-    <!-- KPI Cards -->
-    <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-body">
-                {% load humanize %}
-                <h5 class="card-title">Penjualan Hari Ini</h5>
-                <p class="card-text">Rp {{ sales_today|floatformat:0|intcomma }}</p>
-            </div>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body">
-                {% load humanize %}
-                <h5 class="card-title">Penjualan Minggu Ini</h5>
-                <p class="card-text">Rp {{ sales_week|floatformat:0|intcomma }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-info mb-3">
-            <div class="card-body">
-                {% load humanize %}
-                <h5 class="card-title">Penjualan Bulan Ini</h5>
-                <p class="card-text">Rp {{ sales_month|floatformat:0|intcomma }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning mb-3">
-            <div class="card-body">
-                {% load humanize %}
-                <h5 class="card-title">Nilai Persediaan</h5>
-                <p class="card-text">Rp {{ inventory_value|floatformat:0|intcomma }}</p>
-            </div>
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-calendar3"></i> <span id="currentPeriod">Bulan Ini</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="changePeriod('today')">Hari Ini</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changePeriod('week')">Minggu Ini</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changePeriod('month')">Bulan Ini</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changePeriod('year')">Tahun Ini</a></li>
+            </ul>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Charts -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>Top Produk (Qty) - Bulan Ini</h5>
-            </div>
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
             <div class="card-body">
-                <canvas id="topProductsChart"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>Top Rules (Lift/Confidence)</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="topRulesChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <!-- Tables -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Stok Rendah</h5>
-            </div>
-            <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Produk</th>
-                            <th>Stok</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if low_stock_count > 0 %}
-                            <tr>
-                                <td colspan="2">{{ low_stock_count }} items dengan stok rendah</td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="2">Tidak ada stok rendah</td>
-                            </tr>
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="text-muted small mb-1">Penjualan {{ selected_period|title }}</div>
+                        {% load humanize %}
+                        <div class="h5 mb-0 font-weight-bold text-primary">
+                            Rp {{ sales_current|floatformat:0|intcomma }}
+                        </div>
+                        {% if sales_current_change %}
+                        <div class="small {% if sales_current_change >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+                            <i class="bi bi-arrow-{% if sales_current_change >= 0 %}up{% else %}down{% endif %}"></i>
+                            {{ sales_current_change|floatformat:1 }}% vs periode sebelumnya
+                        </div>
                         {% endif %}
-                    </tbody>
-                </table>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-cash-coin text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Alert ROP</h5>
-            </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
             <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Produk</th>
-                            <th>Stok</th>
-                            <th>ROP</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for alert in rop_alerts %}
-                        <tr>
-                            <td>{{ alert.product }}</td>
-                            <td>{{ alert.current_qty }}</td>
-                            <td>{{ alert.rop }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3">Tidak ada alert ROP</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="text-muted small mb-1">Penjualan Hari Ini</div>
+                        {% load humanize %}
+                        <div class="h5 mb-0 font-weight-bold text-primary">
+                            Rp {{ sales_today|floatformat:0|intcomma }}
+                        </div>
+                        {% if sales_today_change %}
+                        <div class="small {% if sales_today_change >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+                            <i class="bi bi-arrow-{% if sales_today_change >= 0 %}up{% else %}down{% endif %}"></i>
+                            {{ sales_today_change|floatformat:1 }}% vs kemarin
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-cash-coin text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>PO Terbuka</h5>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="text-muted small mb-1">Penjualan Minggu Ini</div>
+                        {% load humanize %}
+                        <div class="h5 mb-0 font-weight-bold text-success">
+                            Rp {{ sales_week|floatformat:0|intcomma }}
+                        </div>
+                        {% if sales_week_change %}
+                        <div class="small {% if sales_week_change >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+                            <i class="bi bi-arrow-{% if sales_week_change >= 0 %}up{% else %}down{% endif %}"></i>
+                            {{ sales_week_change|floatformat:1 }}% vs minggu lalu
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="text-muted small mb-1">Penjualan Bulan Ini</div>
+                        {% load humanize %}
+                        <div class="h5 mb-0 font-weight-bold text-info">
+                            Rp {{ sales_month|floatformat:0|intcomma }}
+                        </div>
+                        {% if sales_month_change %}
+                        <div class="small {% if sales_month_change >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+                            <i class="bi bi-arrow-{% if sales_month_change >= 0 %}up{% else %}down{% endif %}"></i>
+                            {{ sales_month_change|floatformat:1 }}% vs bulan lalu
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart-fill text-primary"></i> 
+                    Top Produk (Qty) - <span id="chartPeriodLabel">Bulan Ini</span>
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="updateTopProducts('week')">Minggu</button>
+                    <button class="btn btn-outline-secondary active" onclick="updateTopProducts('month')">Bulan</button>
+                    <button class="btn btn-outline-secondary" onclick="updateTopProducts('year')">Tahun</button>
+                </div>
             </div>
             <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>PO Number</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for po in open_pos %}
-                        <tr>
-                            <td>{{ po.po_number }}</td>
-                            <td>
-                                {% if po.status == 'DRAFT' %}
-                                    <span class="badge bg-secondary">{{ po.get_status_display }}</span>
-                                {% elif po.status == 'SENT' %}
-                                    <span class="badge bg-primary">{{ po.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="2">Tidak ada PO terbuka</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <canvas id="topProductsChart" height="60"></canvas>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Rules Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-diagram-3 text-success"></i> 
+                    Top Rules (Lift/Confidence)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="topRulesChart" height="60"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Tables Row -->
+<div class="row">
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle text-danger"></i> 
+                    Stok Rendah
+                </h5>
+                {% if low_stock_count > 0 %}
+                <span class="badge bg-danger">{{ low_stock_count }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-end">Stok</th>
+                                <th class="text-end">Min</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                            <tr>
+                                <td>
+                                    <small class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ item.product.name }}">
+                                        {{ item.product.name }}
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-danger">{{ item.qty }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <small class="text-muted">{{ item.product.min_stock }}</small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                    <p class="mb-0 small">Semua stok aman</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if low_stock_count > 5 %}
+            <div class="card-footer bg-white text-center">
+                <a href="{% url 'inventory:low_stock_alerts' %}" class="btn btn-sm btn-outline-primary">
+                    Lihat Semua ({{ low_stock_count }})
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-bell text-warning"></i> 
+                    Alert ROP
+                </h5>
+                {% if rop_alerts_count > 0 %}
+                <span class="badge bg-warning text-dark">{{ rop_alerts_count }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-end">Stok</th>
+                                <th class="text-end">ROP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in rop_alerts %}
+                            <tr>
+                                <td>
+                                    <small class="text-truncate d-inline-block" style="max-width: 120px;" title="{{ alert.product }}">
+                                        {{ alert.product }}
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ alert.current_qty }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <small class="text-muted">{{ alert.rop }}</small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                    <p class="mb-0 small">Tidak ada alert ROP</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if rop_alerts_count > 5 %}
+            <div class="card-footer bg-white text-center">
+                <a href="{% url 'inventory:reorder_policy_list' %}" class="btn btn-sm btn-outline-warning">
+                    Lihat Semua ({{ rop_alerts_count }})
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-text text-info"></i> 
+                    PO Terbuka
+                </h5>
+                {% if open_pos.count > 0 %}
+                <span class="badge bg-info">{{ open_pos.count }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Tanggal</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for po in open_pos %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'purchases:purchase_order_detail' po.id %}" class="text-decoration-none">
+                                        <small>{{ po.po_number }}</small>
+                                    </a>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ po.created_at|date:"d/m/y" }}</small>
+                                </td>
+                                <td class="text-center">
+                                    {% if po.status == 'DRAFT' %}
+                                        <span class="badge bg-secondary">{{ po.get_status_display }}</span>
+                                    {% elif po.status == 'SENT' %}
+                                        <span class="badge bg-primary">{{ po.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    <i class="bi bi-inbox"></i>
+                                    <p class="mb-0 small">Tidak ada PO terbuka</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if open_pos.count > 5 %}
+            <div class="card-footer bg-white text-center">
+                <a href="{% url 'purchases:purchase_order_list' %}" class="btn btn-sm btn-outline-info">
+                    Lihat Semua ({{ open_pos.count }})
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -175,76 +351,195 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // Initialize charts with actual data
-    document.addEventListener('DOMContentLoaded', function() {
-        // Load top products chart
-        fetch('{% url "summary:api_top_products" %}?period=month')
-            .then(response => response.json())
-            .then(data => {
-                const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
-                new Chart(topProductsCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: data.products.map(item => item.name),
-                        datasets: [{
-                            label: 'Jumlah Terjual',
-                            data: data.products.map(item => item.qty),
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading top products:', error));
-        
-        // Load top rules chart
-        fetch('{% url "summary:api_top_rules" %}')
-            .then(response => response.json())
-            .then(data => {
-                const topRulesCtx = document.getElementById('topRulesChart').getContext('2d');
-                
-                // Prepare data for both lift and confidence
-                const labels = data.rules.map(rule => rule.rule_text);
-                new Chart(topRulesCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Lift',
-                                data: data.rules.map(rule => rule.lift),
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1
+let topProductsChart, topRulesChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTopProducts('month');
+    loadTopRules();
+});
+
+function loadTopProducts(period) {
+    const periodLabels = {
+        'week': 'Minggu Ini',
+        'month': 'Bulan Ini',
+        'year': 'Tahun Ini'
+    };
+    
+    fetch(`{% url "summary:api_top_products" %}?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('topProductsChart').getContext('2d');
+            
+            if (topProductsChart) {
+                topProductsChart.destroy();
+            }
+            
+            topProductsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.products.map(item => item.name),
+                    datasets: [{
+                        label: 'Jumlah Terjual',
+                        data: data.products.map(item => item.qty),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14
                             },
-                            {
-                                label: 'Confidence',
-                                data: data.rules.map(rule => rule.confidence),
-                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
+                            bodyFont: {
+                                size: 13
                             }
-                        ]
+                        }
                     },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
                             }
                         }
                     }
-                });
-            })
-            .catch(error => console.error('Error loading top rules:', error));
+                }
+            });
+            
+            document.getElementById('chartPeriodLabel').textContent = periodLabels[period] || 'Bulan Ini';
+        })
+        .catch(error => {
+            console.error('Error loading top products:', error);
+            showChartError('topProductsChart', 'Gagal memuat data produk');
+        });
+}
+
+function loadTopRules() {
+    fetch('{% url "summary:api_top_rules" %}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('topRulesChart').getContext('2d');
+            
+            if (topRulesChart) {
+                topRulesChart.destroy();
+            }
+            
+            topRulesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.rules.map(rule => rule.rule_text),
+                    datasets: [
+                        {
+                            label: 'Lift',
+                            data: data.rules.map(rule => rule.lift),
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            borderRadius: 5
+                        },
+                        {
+                            label: 'Confidence',
+                            data: data.rules.map(rule => rule.confidence),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            borderRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading top rules:', error);
+            showChartError('topRulesChart', 'Gagal memuat data rules');
+        });
+}
+
+function updateTopProducts(period) {
+    // Update active button
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
     });
+    event.target.classList.add('active');
+    
+    loadTopProducts(period);
+}
+
+function showChartError(chartId, message) {
+    const canvas = document.getElementById(chartId);
+    const parent = canvas.parentElement;
+    parent.innerHTML = `
+        <div class="alert alert-warning text-center" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> ${message}
+        </div>
+    `;
+}
+
+function refreshDashboard() {
+    location.reload();
+}
+
+function changePeriod(period) {
+    const labels = {
+        'today': 'Hari Ini',
+        'week': 'Minggu Ini',
+        'month': 'Bulan Ini',
+        'year': 'Tahun Ini'
+    };
+    document.getElementById('currentPeriod').textContent = labels[period];
+    
+    // Reload the page with the selected period
+    window.location.href = `?period=${period}`;
+}
 </script>
 {% endblock %}

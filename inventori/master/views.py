@@ -75,7 +75,7 @@ def product_list(request):
         raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     products = Product.objects.select_related('category').all()
-    paginator = Paginator(products, 10)  # Show 10 products per page
+    paginator = Paginator(products, 20)  # Show 10 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'master/product_list.html', {'page_obj': page_obj})
