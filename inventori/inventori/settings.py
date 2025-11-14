@@ -19,10 +19,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-development-key-for-testing-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+# DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']  # Change this in production
+ALLOWED_HOSTS = [
+    'maninventory.whatshub.web.id',
+    'localhost',
+    '127.0.0.1'
+]  
+# uncomment this in production
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://maninventory.whatshub.web.id',
+#     # tambahkan 'http://...' hanya jika environment non-HTTPS
+# ]
 
+# # Jika pakai reverse proxy/Load Balancer (Nginx/Cloudflare) di HTTPS:
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# # Cookie di production
+# CSRF_COOKIE_SECURE = True        # pakai True jika situs diakses via HTTPS
+# SESSION_COOKIE_SECURE = True     # sama
+# CSRF_COOKIE_SAMESITE = 'Lax'     # default aman; bisa 'None' jika lintas-domain + HTTPS
+# SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Application definition
 
