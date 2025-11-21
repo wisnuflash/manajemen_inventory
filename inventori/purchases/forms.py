@@ -1,16 +1,15 @@
 from django import forms
 from .models import PurchaseOrder, POItem, GoodsReceipt
-from master.models import Product, Supplier
+from master.models import Product
 from inventory.models import Warehouse
 
 
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ['po_number', 'supplier', 'warehouse']
+        fields = ['po_number', 'warehouse']
         widgets = {
             'po_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'supplier': forms.Select(attrs={'class': 'form-control'}),
             'warehouse': forms.Select(attrs={'class': 'form-control'}),
         }
 

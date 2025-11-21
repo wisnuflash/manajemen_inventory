@@ -1,7 +1,9 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 from master.models import Product, Customer
 from inventory.models import Warehouse
 
+User = get_user_model()
 
 class Sale(models.Model):
     """
@@ -16,6 +18,7 @@ class Sale(models.Model):
     invoice_number = models.CharField(max_length=40, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     sold_at = models.DateTimeField(auto_now_add=True)

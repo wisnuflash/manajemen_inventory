@@ -144,9 +144,14 @@
                 <a href="{% url 'sales:pos' %}" class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-cash-stack"></i> POS
                 </a>
-                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale_list' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-receipt"></i> Daftar Penjualan
                 </a>
+                {% if user.role == 'manager' or user.role == 'admin' %}
+                <a href="{% url 'sales:sale_report' %}" class="nav-link {% if 'sale_report' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-bar-chart-line"></i> Laporan Penjualan
+                </a>
+                {% endif %}
             </div>
         {% endif %}
         
@@ -188,9 +193,14 @@
                 <a href="{% url 'sales:pos' %}" class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-cash-stack"></i> Transaksi
                 </a>
-                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'sales:sale_list' %}" class="nav-link {% if 'sale_list' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-receipt"></i> Daftar Penjualan
                 </a>
+                {% if user.role == 'manager' or user.role == 'admin' %}
+                <a href="{% url 'sales:sale_report' %}" class="nav-link {% if 'sale_report' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-bar-chart-line"></i> Laporan Penjualan
+                </a>
+                {% endif %}
             </div>
         {% endif %}
         
@@ -222,9 +232,6 @@
                 </a>
                 <a href="{% url 'master:product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-box"></i> Produk
-                </a>
-                <a href="{% url 'master:supplier_list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-people"></i> Supplier
                 </a>
                 <a href="{% url 'master:customer_list' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-person"></i> Customer

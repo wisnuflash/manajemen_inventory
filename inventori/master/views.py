@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
-from .models import Category, Product, Supplier, Customer
-from .forms import CategoryForm, ProductForm, SupplierForm, CustomerForm
+from .models import Category, Product, Customer
+from .forms import CategoryForm, ProductForm, CustomerForm
 
 
 # Category CRUD
@@ -125,66 +125,6 @@ def product_delete(request, pk):
         messages.success(request, 'Product deleted successfully.')
         return redirect('master:product_list')
     return render(request, 'master/product_confirm_delete.html', {'product': product})
-
-
-# Supplier CRUD
-@login_required
-def supplier_list(request):
-    # Check if user has permission to access suppliers
-    if request.user.role not in ['manager', 'admin']:
-        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
-        
-    suppliers = Supplier.objects.all()
-    paginator = Paginator(suppliers, 10)  # Show 10 suppliers per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'master/supplier_list.html', {'page_obj': page_obj})
-
-@login_required
-def supplier_create(request):
-    # Check if user has permission to create suppliers
-    if request.user.role not in ['manager', 'admin']:
-        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
-        
-    if request.method == 'POST':
-        form = SupplierForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Supplier created successfully.')
-            return redirect('master:supplier_list')
-    else:
-        form = SupplierForm()
-    return render(request, 'master/supplier_form.html', {'form': form})
-
-@login_required
-def supplier_update(request, pk):
-    # Check if user has permission to update suppliers
-    if request.user.role not in ['manager', 'admin']:
-        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
-        
-    supplier = get_object_or_404(Supplier, pk=pk)
-    if request.method == 'POST':
-        form = SupplierForm(request.POST, instance=supplier)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Supplier updated successfully.')
-            return redirect('master:supplier_list')
-    else:
-        form = SupplierForm(instance=supplier)
-    return render(request, 'master/supplier_form.html', {'form': form, 'supplier': supplier})
-
-@login_required
-def supplier_delete(request, pk):
-    # Check if user has permission to delete suppliers
-    if request.user.role not in ['manager', 'admin']:
-        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
-        
-    supplier = get_object_or_404(Supplier, pk=pk)
-    if request.method == 'POST':
-        supplier.delete()
-        messages.success(request, 'Supplier deleted successfully.')
-        return redirect('master:supplier_list')
-    return render(request, 'master/supplier_confirm_delete.html', {'supplier': supplier})
 
 
 # Customer CRUD

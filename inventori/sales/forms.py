@@ -7,10 +7,9 @@ from inventory.models import Warehouse
 class POSForm(forms.ModelForm):
     class Meta:
         model = Sale
-        fields = ['customer', 'warehouse']
+        fields = ['customer']
         widgets = {
             'customer': forms.Select(attrs={'class': 'form-control'}),
-            'warehouse': forms.Select(attrs={'class': 'form-control'}),
         }
 
 

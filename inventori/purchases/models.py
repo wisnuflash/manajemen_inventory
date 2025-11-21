@@ -1,5 +1,5 @@
 from django.db import models
-from master.models import Product, Supplier
+from master.models import Product
 from inventory.models import Warehouse
 
 
@@ -15,7 +15,6 @@ class PurchaseOrder(models.Model):
     ]
     
     po_number = models.CharField(max_length=40, unique=True)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)

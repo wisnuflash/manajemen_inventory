@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from .models import Sale, SaleItem
 from .forms import POSForm, SaleItemForm
 from master.models import Product
-from inventory.models import Stock, StockMove
+from inventory.models import Stock, StockMove, Warehouse
 from inventory.services import update_stock
 import uuid
 from datetime import datetime
@@ -78,15 +78,21 @@ def pos_unified(request, sale_id=None):
             # Create new sale
             form = POSForm(request.POST)
             if form.is_valid():
+                # Get default warehouse
+                warehouse = Warehouse.objects.first()
+                if not warehouse:
+                    messages.error(request, 'Tidak ada gudang terdaftar di sistem. Silakan buat gudang terlebih dahulu.')
+                    return redirect('sales:pos_unified')
+
                 # Check if there's already a draft sale with the same customer and warehouse
                 existing_draft = Sale.objects.filter(
                     status='DRAFT',
                     customer=form.cleaned_data.get('customer'),
-                    warehouse=form.cleaned_data.get('warehouse')
+                    warehouse=warehouse
                 ).first()
                 
                 if existing_draft:
-                    messages.warning(request, f'Anda sudah memiliki transaksi draft untuk customer dan gudang ini: {existing_draft.invoice_number}. Silakan lanjutkan transaksi tersebut.')
+                    messages.warning(request, f'Anda sudah memiliki transaksi draft untuk customer ini: {existing_draft.invoice_number}. Silakan lanjutkan transaksi tersebut.')
                     return redirect('sales:pos_unified', sale_id=existing_draft.id)
                 
                 # Generate unique invoice number
@@ -95,6 +101,8 @@ def pos_unified(request, sale_id=None):
                 sale = form.save(commit=False)
                 sale.status = 'DRAFT'
                 sale.invoice_number = invoice_number
+                sale.warehouse = warehouse
+                sale.user = request.user
                 sale.save()
                 messages.success(request, f'Transaksi dimulai dengan invoice: {sale.invoice_number}')
                 return redirect('sales:pos_unified', sale_id=sale.id)
@@ -450,6 +458,61 @@ def sale_list(request):
         'end_date': end_date_param or '',
     }
     return render(request, 'sales/sale_list.html', context)
+
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@login_required
+def sale_report(request):
+    """
+    Sales report with filtering by date and user
+    """
+    # Check permission
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke laporan ini.")
+        
+    start_date_param = request.GET.get('start_date')
+    end_date_param = request.GET.get('end_date')
+    user_id = request.GET.get('user_id')
+    
+    sales = Sale.objects.filter(status='PAID').select_related('customer', 'user', 'warehouse').order_by('-sold_at')
+    
+    if start_date_param:
+        try:
+            start_date = datetime.strptime(start_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__gte=start_date)
+        except ValueError:
+            pass
+            
+    if end_date_param:
+        try:
+            end_date = datetime.strptime(end_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__lte=end_date)
+        except ValueError:
+            pass
+            
+    if user_id:
+        sales = sales.filter(user_id=user_id)
+        
+    # Get all users for filter dropdown
+    users = User.objects.all()
+    
+    # Calculate totals
+    total_revenue = sum(sale.total_amount for sale in sales)
+    total_transactions = sales.count()
+    
+    context = {
+        'sales': sales,
+        'users': users,
+        'selected_user_id': int(user_id) if user_id else None,
+        'start_date': start_date_param,
+        'end_date': end_date_param,
+        'total_revenue': total_revenue,
+        'total_transactions': total_transactions,
+    }
+    return render(request, 'sales/sales_report.html', context)
 
 
 @login_required

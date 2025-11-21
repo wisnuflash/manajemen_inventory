@@ -16,12 +16,6 @@ urlpatterns = [
     path('products/<int:pk>/update/', views.product_update, name='product_update'),
     path('products/<int:pk>/delete/', views.product_delete, name='product_delete'),
     
-    # Supplier URLs
-    path('suppliers/', views.supplier_list, name='supplier_list'),
-    path('suppliers/create/', views.supplier_create, name='supplier_create'),
-    path('suppliers/<int:pk>/update/', views.supplier_update, name='supplier_update'),
-    path('suppliers/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
-    
     # Customer URLs
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/create/', views.customer_create, name='customer_create'),

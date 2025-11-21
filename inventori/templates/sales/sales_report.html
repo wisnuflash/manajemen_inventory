@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Laporan Penjualan - Manajemen Inventori{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Laporan Penjualan</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Cetak
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-funnel"></i> Filter Laporan
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Dari Tanggal</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Sampai Tanggal</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="user_id" class="form-label">User / Kasir</label>
+                <select class="form-select" id="user_id" name="user_id">
+                    <option value="">Semua User</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if selected_user_id == user.id %}selected{% endif %}>
+                        {{ user.username }} ({{ user.get_role_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 me-2">
+                    <i class="bi bi-search"></i> Tampilkan
+                </button>
+                <a href="{% url 'sales:sale_report' %}" class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Total Pendapatan</div>
+            <div class="card-body">
+                <h3 class="card-title">Rp {{ total_revenue|floatformat:0|intcomma }}</h3>
+                <p class="card-text">Dari periode yang dipilih</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Total Transaksi</div>
+            <div class="card-body">
+                <h3 class="card-title">{{ total_transactions }}</h3>
+                <p class="card-text">Transaksi berhasil (Paid)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Table -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table"></i> Detail Transaksi
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Invoice</th>
+                        <th>Customer</th>
+                        <th>User / Kasir</th>
+                        <th>Gudang</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.sold_at|date:"d/m/Y H:i" }}</td>
+                        <td>{{ sale.invoice_number }}</td>
+                        <td>{{ sale.customer.name|default:"-" }}</td>
+                        <td>
+                            {% if sale.user %}
+                                <span class="badge bg-info text-dark">{{ sale.user.username }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sale.warehouse.name }}</td>
+                        <td class="text-end">Rp {{ sale.total_amount|floatformat:0|intcomma }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'sales:sale_detail' sale.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> Detail
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">Tidak ada data penjualan untuk filter yang dipilih.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="5" class="text-end">Grand Total:</th>
+                        <th class="text-end">Rp {{ total_revenue|floatformat:0|intcomma }}</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -16,7 +16,7 @@ sys.path.append('/Users/wisnuflash/development/adron/manajemen_inventory/invento
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'inventori.settings')
 django.setup()
 
-from master.models import Category, Product, Supplier, Customer
+from master.models import Category, Product, Customer
 from inventory.models import Warehouse, Stock, ReorderPolicy
 from sales.models import Sale, SaleItem
 from purchases.models import PurchaseOrder, POItem, GoodsReceipt
@@ -112,27 +112,6 @@ def create_categories():
     
     return categories
 
-def create_suppliers():
-    print('Creating suppliers...')
-    
-    suppliers_data = [
-        {'name': 'PT. Elektronik Maju Jaya', 'contact': 'Budi Santoso', 'phone': '021-12345678', 'email': 'budi@emajujaya.com', 'address': 'Jl. Merdeka No. 123, Jakarta'},
-        {'name': 'CV. Dapur Sejahtera', 'contact': 'Siti Rahayu', 'phone': '021-87654321', 'email': 'siti@dapursejahtera.com', 'address': 'Jl. Sudirman No. 45, Bandung'},
-        {'name': 'PT. Furniture Indah', 'contact': 'Ahmad Priyanto', 'phone': '021-23456789', 'email': 'ahmad@furnitureindah.com', 'address': 'Jl. Gatot Subroto No. 67, Surabaya'},
-        {'name': 'CV. Otomotif Makmur', 'contact': 'Rudi Hartono', 'phone': '021-98765432', 'email': 'rudi@otomotifmakmur.com', 'address': 'Jl. MT Haryono No. 89, Medan'},
-        {'name': 'PT. Kantor Lestari', 'contact': 'Dewi Kusumawardhani', 'phone': '021-34567890', 'email': 'dewi@kantorlestari.com', 'address': 'Jl. Thamrin No. 101, Makassar'},
-    ]
-    
-    for supp_data in suppliers_data:
-        Supplier.objects.get_or_create(
-            name=supp_data['name'],
-            defaults={
-                'contact': supp_data['contact'],
-                'phone': supp_data['phone'],
-                'email': supp_data['email'],
-                'address': supp_data['address']
-            }
-        )
 
 def create_customers():
     print('Creating customers...')
@@ -192,9 +171,7 @@ def create_warehouses():
     print('Creating warehouses...')
     
     warehouses_data = [
-        {'code': 'WH-JKT', 'name': 'Gudang Jakarta', 'address': 'Jl. Industri No. 1, Jakarta'},
-        {'code': 'WH-BDG', 'name': 'Gudang Bandung', 'address': 'Jl. Pabrik No. 2, Bandung'},
-        {'code': 'WH-SBY', 'name': 'Gudang Surabaya', 'address': 'Jl. Perdagangan No. 3, Surabaya'},
+        {'code': 'WH-TKO', 'name': 'Toko Electric', 'address': 'Jl. Raya Toko Electric No. 1'},
     ]
     
     for wh_data in warehouses_data:
@@ -260,18 +237,15 @@ def create_purchase_orders():
     print('Creating purchase orders...')
     
     products = list(Product.objects.all())
-    suppliers = list(Supplier.objects.all())
     warehouses = list(Warehouse.objects.all())
     
     # Create some purchase orders
     for i in range(5):
-        supplier = random.choice(suppliers)
         warehouse = random.choice(warehouses)
         
         po, created = PurchaseOrder.objects.get_or_create(
             po_number=f'PO-{i+1:04d}',
             defaults={
-                'supplier': supplier,
                 'warehouse': warehouse,
                 'status': 'SENT' if i < 3 else 'DRAFT'
             }
@@ -381,7 +355,6 @@ if __name__ == '__main__':
     
     # Create master data
     create_categories()
-    create_suppliers()
     create_customers()
     create_products()
     create_warehouses()

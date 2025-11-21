@@ -1,5 +1,5 @@
 from django import forms
-from .models import Category, Product, Supplier, Customer
+from .models import Category, Product, Customer
 
 
 class CategoryForm(forms.ModelForm):
@@ -24,20 +24,6 @@ class ProductForm(forms.ModelForm):
             'uom': forms.TextInput(attrs={'class': 'form-control'}),
             'min_stock': forms.NumberInput(attrs={'class': 'form-control'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
-
-class SupplierForm(forms.ModelForm):
-    class Meta:
-        model = Supplier
-        fields = ['name', 'contact', 'phone', 'email', 'address', 'is_active']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'contact': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
