@@ -376,41 +376,76 @@ def remove_sale_item(request, item_id):
 @csrf_exempt
 def search_product_ajax(request):
     """
-    AJAX endpoint to search for products by SKU
+    AJAX endpoint to search for products by SKU or Name (for suggestions)
     """
     if request.method == 'GET':
-        sku = request.GET.get('sku', '')
+        sku = request.GET.get('sku', '').strip()
+        search_query = request.GET.get('q', '').strip()
         warehouse_id = request.GET.get('warehouse_id', '')
-        
-        try:
-            product = Product.objects.get(sku=sku, is_active=True)
-            # Get the available stock
-            stock_qty = 0
-            if warehouse_id:
-                try:
-                    warehouse_id = int(warehouse_id)
-                    stock = Stock.objects.filter(
-                        product=product,
-                        warehouse_id=warehouse_id
-                    ).first()
-                    stock_qty = stock.qty if stock else 0
-                except (ValueError, TypeError):
-                    # If warehouse_id is not a valid integer, set stock_qty to 0
-                    stock_qty = 0
+        search_by = request.GET.get('search_by', '')
+
+        # Mode 1: Search suggestions (by name or SKU)
+        if search_query and search_by == 'name':
+            products = Product.objects.filter(
+                Q(name__icontains=search_query) | Q(sku__icontains=search_query),
+                is_active=True
+            )[:10]  # Limit to 10 results
+            
+            results = []
+            for product in products:
+                # Get stock for this product
+                stock_qty = 0
+                if warehouse_id:
+                    try:
+                        wh_id = int(warehouse_id)
+                        stock = Stock.objects.filter(product=product, warehouse_id=wh_id).first()
+                        stock_qty = stock.qty if stock else 0
+                    except (ValueError, TypeError):
+                        pass
+                
+                results.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'sku': product.sku,
+                    'price': float(product.price),
+                    'stock': stock_qty
+                })
             
             return JsonResponse({
                 'success': True,
-                'id': product.id,
-                'name': product.name,
-                'price': float(product.price),
-                'stock': stock_qty,
-                'sku': product.sku
+                'products': results
             })
-        except Product.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'error': f'Produk dengan SKU {sku} tidak ditemukan'
-            })
+            
+        # Mode 2: Exact SKU lookup (when user selects or scans)
+        if sku:
+            try:
+                product = Product.objects.get(sku=sku, is_active=True)
+                # Get the available stock
+                stock_qty = 0
+                if warehouse_id:
+                    try:
+                        warehouse_id = int(warehouse_id)
+                        stock = Stock.objects.filter(
+                            product=product,
+                            warehouse_id=warehouse_id
+                        ).first()
+                        stock_qty = stock.qty if stock else 0
+                    except (ValueError, TypeError):
+                        stock_qty = 0
+                
+                return JsonResponse({
+                    'success': True,
+                    'id': product.id,
+                    'name': product.name,
+                    'price': float(product.price),
+                    'stock': stock_qty,
+                    'sku': product.sku
+                })
+            except Product.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Produk dengan Kode {sku} tidak ditemukan'
+                })
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
@@ -461,8 +496,80 @@ def sale_list(request):
 
 
 from django.contrib.auth import get_user_model
+import openpyxl
+from django.http import HttpResponse
 
 User = get_user_model()
+
+@login_required
+def export_sales_excel(request):
+    """
+    Export sales report to Excel with filtering
+    """
+    if request.user.role not in ['manager', 'admin']:
+        raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
+        
+    start_date_param = request.GET.get('start_date')
+    end_date_param = request.GET.get('end_date')
+    user_id = request.GET.get('user_id')
+    
+    sales = Sale.objects.filter(status='PAID').select_related('customer', 'user', 'warehouse').order_by('-sold_at')
+    
+    if start_date_param:
+        try:
+            start_date = datetime.strptime(start_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__gte=start_date)
+        except ValueError:
+            pass
+            
+    if end_date_param:
+        try:
+            end_date = datetime.strptime(end_date_param, "%Y-%m-%d").date()
+            sales = sales.filter(sold_at__date__lte=end_date)
+        except ValueError:
+            pass
+            
+    if user_id:
+        sales = sales.filter(user_id=user_id)
+        
+    # Create Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Laporan Penjualan"
+    
+    # Header
+    headers = ['No', 'Invoice', 'Tanggal', 'Customer', 'User / Kasir', 'Gudang', 'Total']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = openpyxl.styles.Font(bold=True)
+    
+    # Data
+    total_revenue = 0
+    for row_num, sale in enumerate(sales, 2):
+        ws.cell(row=row_num, column=1).value = row_num - 1
+        ws.cell(row=row_num, column=2).value = sale.invoice_number
+        ws.cell(row=row_num, column=3).value = sale.sold_at.strftime('%d/%m/%Y %H:%M')
+        ws.cell(row=row_num, column=4).value = sale.customer.name if sale.customer else "-"
+        ws.cell(row=row_num, column=5).value = sale.user.username if sale.user else "-"
+        ws.cell(row=row_num, column=6).value = sale.warehouse.name
+        ws.cell(row=row_num, column=7).value = float(sale.total_amount)
+        total_revenue += sale.total_amount
+        
+    # Footer (Total)
+    last_row = len(sales) + 2
+    ws.cell(row=last_row, column=6).value = "GRAND TOTAL"
+    ws.cell(row=last_row, column=6).font = openpyxl.styles.Font(bold=True)
+    ws.cell(row=last_row, column=7).value = float(total_revenue)
+    ws.cell(row=last_row, column=7).font = openpyxl.styles.Font(bold=True)
+    
+    # Response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"Laporan_Penjualan_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb.save(response)
+    return response
 
 @login_required
 def sale_report(request):

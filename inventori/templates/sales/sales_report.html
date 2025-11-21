@@ -8,6 +8,9 @@
     <h1 class="h2">Laporan Penjualan</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
+            <a href="{% url 'sales:export_sales_excel' %}?start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}&user_id={{ selected_user_id|default:'' }}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
                 <i class="bi bi-printer"></i> Cetak
             </button>

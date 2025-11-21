@@ -20,5 +20,6 @@ urlpatterns = [
     # Sales management URLs
     path('', views.sale_list, name='sale_list'),
     path('report/', views.sale_report, name='sale_report'),
+    path('report/export/', views.export_sales_excel, name='export_sales_excel'),
     path('<int:pk>/', views.sale_detail, name='sale_detail'),
 ]

@@ -14,9 +14,9 @@ class POSForm(forms.ModelForm):
 
 
 class SaleItemForm(forms.ModelForm):
-    product_sku = forms.CharField(max_length=50, label='SKU Produk', widget=forms.TextInput(attrs={
+    product_sku = forms.CharField(max_length=50, label='Kode Barang', widget=forms.TextInput(attrs={
         'class': 'form-control',
-        'placeholder': 'Scan atau ketik SKU produk',
+        'placeholder': 'Scan atau ketik Kode Barang / Nama',
         'id': 'product_sku'
     }))
     
