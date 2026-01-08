@@ -4,8 +4,10 @@ from . import views
 app_name = 'mining'
 
 urlpatterns = [
-    path('run/', views.mining_run, name='mining_run'),
-    path('rules/', views.association_rules_list, name='association_rules_list'),
+    path('', views.mining_index, name='mining_index'),
     path('api/rules/', views.association_rules_api, name='association_rules_api'),
-    path('dashboard/', views.mining_dashboard, name='mining_dashboard'),
+    # Redirect old URLs to the new consolidated view
+    path('run/', views.mining_index, name='mining_run'),
+    path('rules/', views.mining_index, name='association_rules_list'),
+    path('dashboard/', views.mining_index, name='mining_dashboard'),
 ]

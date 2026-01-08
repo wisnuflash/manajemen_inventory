@@ -20,7 +20,10 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-development-ke
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = config('DEBUG', default=True, cast=bool)
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://maninventory.whatshub.web.id'
+]
+DEBUG = False
 ALLOWED_HOSTS = [
     'maninventory.whatshub.web.id',
     'localhost',

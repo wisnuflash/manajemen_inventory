@@ -196,14 +196,8 @@
         {% if user.role == 'analyst' or user.role == 'manager' or user.role == 'admin' %}
             <div class="menu-section">
                 <div class="menu-section-title">Mining</div>
-                <a href="{% url 'mining:mining_dashboard' %}" class="nav-link {% if 'mining_dashboard' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-graph-up"></i> Dashboard Mining
-                </a>
-                <a href="{% url 'mining:association_rules_list' %}" class="nav-link {% if 'association_rules' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-link-45deg"></i> Aturan Asosiasi
-                </a>
-                <a href="{% url 'mining:mining_run' %}" class="nav-link {% if 'mining_run' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-play-circle"></i> Jalankan Mining
+                <a href="{% url 'mining:mining_index' %}" class="nav-link {% if 'mining_index' in request.resolver_match.url_name or 'mining_dashboard' in request.resolver_match.url_name or 'mining_run' in request.resolver_match.url_name or 'association_rules_list' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-graph-up"></i> Mining Data
                 </a>
             </div>
         {% endif %}

@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+
+{% block title %}Mining - Manajemen Inventori{% endblock %}
+
+{% block extra_css %}
+<style>
+    .slider-container {
+        margin: 15px 0;
+    }
+    
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .slider-value {
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+    }
+    
+    .tab-content {
+        padding: 20px 0;
+    }
+    
+    .stats-card {
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Mining Data</h1>
+</div>
+
+<!-- Algorithm Parameters Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Parameter Algoritma</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="algorithm-form">
+            {% csrf_token %}
+            
+            <!-- Minimum Support Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Minimum Support: <span id="min_support_value" class="slider-value">0.05</span></span>
+                </div>
+                <input type="range" min="0.01" max="0.5" step="0.01" value="0.05" class="slider" id="min_support" name="min_support">
+                <small class="form-text text-muted">Proporsi transaksi yang memuat itemset (misal: 0.05 artinya itemset muncul di 5% dari total transaksi)</small>
+            </div>
+            
+            <!-- Minimum Confidence Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Minimum Confidence: <span id="min_confidence_value" class="slider-value">0.60</span></span>
+                </div>
+                <input type="range" min="0.01" max="1.0" step="0.01" value="0.60" class="slider" id="min_confidence" name="min_confidence">
+                <small class="form-text text-muted">Probabilitas konsekuen terjadi jika antecedent terjadi</small>
+            </div>
+            
+            <!-- Maximum Rules Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Jumlah Maksimum Aturan: <span id="limit_value" class="slider-value">200</span></span>
+                </div>
+                <input type="range" min="10" max="1000" step="10" value="200" class="slider" id="limit" name="limit">
+                <small class="form-text text-muted">Jumlah maksimum aturan asosiasi untuk disimpan</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Jalankan Algoritma</button>
+        </form>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs" id="miningTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">Dashboard</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button" role="tab">Aturan Asosiasi</button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="miningTabContent">
+    <!-- Dashboard Tab -->
+    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Aturan Asosiasi Teratas (berdasarkan Lift)</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if top_rules %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Antecedent</th>
+                                        <th>→</th>
+                                        <th>Consequent</th>
+                                        <th>Support</th>
+                                        <th>Confidence</th>
+                                        <th>Lift</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rule in top_rules %}
+                                    <tr>
+                                        <td>{{ rule.get_antecedent_list|join:", " }}</td>
+                                        <td>→</td>
+                                        <td>{{ rule.get_consequent_list|join:", " }}</td>
+                                        <td>{{ rule.support|floatformat:4 }}</td>
+                                        <td>{{ rule.confidence|floatformat:4 }}</td>
+                                        <td>{{ rule.lift|floatformat:4 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p>Belum ada aturan asosiasi. Jalankan algoritma mining terlebih dahulu.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card stats-card">
+                    <div class="stat-number">{{ top_rules|length }}</div>
+                    <div class="stat-label">Jumlah Total Aturan</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stats-card">
+                    <div class="stat-number">
+                        {% if top_rules %}
+                            {{ top_rules.0.lift|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Lift Tertinggi</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Rekomendasi Produk Terkait</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Gunakan aturan asosiasi untuk:</p>
+                        <ul>
+                            <li>Rekomendasi produk saat POS (saat men-scan item A, rekomendasikan item B)</li>
+                            <li>Penataan produk berdekatan (planogram)</li>
+                            <li>Strategi bundling produk</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Statistik Mining</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Confidence tertinggi:
+                        {% if top_rules %}
+                            {{ top_rules.0.confidence|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                        </p>
+                        <p>Support tertinggi:
+                        {% if top_rules %}
+                            {{ top_rules.0.support|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Tab -->
+    <div class="tab-pane fade" id="rules" role="tabpanel">
+        <!-- Filters for Rules -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" id="rules-filter-form">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="sort_by" class="form-label">Urutkan berdasarkan</label>
+                            <select name="sort_by" id="sort_by" class="form-select" onchange="this.form.submit()">
+                                <option value="lift" {% if sort_by == 'lift' %}selected{% endif %}>Lift</option>
+                                <option value="confidence" {% if sort_by == 'confidence' %}selected{% endif %}>Confidence</option>
+                                <option value="support" {% if sort_by == 'support' %}selected{% endif %}>Support</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="limit_rules" class="form-label">Jumlah maksimum</label>
+                            <select name="limit" id="limit_rules" class="form-select" onchange="this.form.submit()">
+                                <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                                <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                                <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                                <option value="200" {% if limit == 200 %}selected{% endif %}>200</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th>Antecedent</th>
+                        <th>→</th>
+                        <th>Consequent</th>
+                        <th>Support</th>
+                        <th>Confidence</th>
+                        <th>Lift</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td>{{ rule.get_antecedent_list|join:", " }}</td>
+                        <td>→</td>
+                        <td>{{ rule.get_consequent_list|join:", " }}</td>
+                        <td>{{ rule.support|floatformat:4 }}</td>
+                        <td>{{ rule.confidence|floatformat:4 }}</td>
+                        <td>{{ rule.lift|floatformat:4 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">Tidak ada aturan asosiasi. Jalankan algoritma mining terlebih dahulu.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update slider values display
+    document.getElementById('min_support').addEventListener('input', function() {
+        document.getElementById('min_support_value').textContent = parseFloat(this.value).toFixed(2);
+    });
+
+    document.getElementById('min_confidence').addEventListener('input', function() {
+        document.getElementById('min_confidence_value').textContent = parseFloat(this.value).toFixed(2);
+    });
+
+    document.getElementById('limit').addEventListener('input', function() {
+        document.getElementById('limit_value').textContent = this.value;
+    });
+
+    // Handle tab navigation and persistence
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check for URL fragment identifier (e.g., #rules)
+        const hash = window.location.hash;
+        let activeTab = null;
+
+        if (hash === '#rules') {
+            activeTab = document.querySelector('#rules-tab');
+        } else if (hash === '#dashboard') {
+            activeTab = document.querySelector('#dashboard-tab');
+        }
+
+        // If no hash but we have a saved tab in localStorage
+        if (!activeTab) {
+            const savedTab = localStorage.getItem('miningActiveTab');
+            if (savedTab) {
+                activeTab = document.querySelector(`button[data-bs-target="${savedTab}"]`);
+            }
+        }
+
+        // Show the active tab
+        if (activeTab) {
+            new bootstrap.Tab(activeTab).show();
+        }
+
+        // Save active tab when changed
+        const tabButtons = document.querySelectorAll('#miningTabs button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                localStorage.setItem('miningActiveTab', this.getAttribute('data-bs-target'));
+
+                // Update URL hash without scrolling
+                const target = this.getAttribute('data-bs-target');
+                if (target === '#rules') {
+                    history.replaceState(null, null, window.location.pathname + '#rules');
+                } else {
+                    history.replaceState(null, null, window.location.pathname + '#dashboard');
+                }
+            });
+        });
+
+        // Handle URL hash changes
+        window.addEventListener('hashchange', function() {
+            const newHash = window.location.hash;
+            if (newHash === '#rules') {
+                new bootstrap.Tab(document.querySelector('#rules-tab')).show();
+            } else {
+                new bootstrap.Tab(document.querySelector('#dashboard-tab')).show();
+            }
+        });
+    });
+
+    // Prevent form submission if no changes made to parameters
+    document.getElementById('algorithm-form').addEventListener('submit', function(e) {
+        // Show processing message
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memproses...';
+        submitBtn.disabled = true;
+
+        // Re-enable button after form submission
+        setTimeout(() => {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }, 3000); // Reset after 3 seconds or when form completes
+    });
+</script>
+{% endblock %}
