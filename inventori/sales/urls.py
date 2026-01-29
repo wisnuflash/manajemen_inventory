@@ -16,6 +16,7 @@ urlpatterns = [
     
     # AJAX endpoint for searching products
     path('ajax/search-product/', views.search_product_ajax, name='search_product_ajax'),
+    path('ajax/universal-search/', views.universal_search_suggestions, name='universal_search'),
     
     # Sales management URLs
     path('', views.sale_list, name='sale_list'),

@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.core.exceptions import PermissionDenied
 from .models import Sale, SaleItem
 from .forms import POSForm, SaleItemForm
-from master.models import Product
+from master.models import Product, Customer
 from inventory.models import Stock, StockMove, Warehouse
 from inventory.services import update_stock
 import uuid
@@ -448,6 +448,59 @@ def search_product_ajax(request):
                 })
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+@login_required
+def universal_search_suggestions(request):
+    """
+    Universal search for suggestions across multiple models (Sale, Customer, Product, Warehouse)
+    """
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'results': []})
+
+    results = []
+
+    # 1. Search Sales (Invoice)
+    sales = Sale.objects.filter(invoice_number__icontains=query)[:5]
+    for sale in sales:
+        results.append({
+            'label': f"Invoice: {sale.invoice_number}",
+            'value': sale.invoice_number,
+            'category': 'Sale'
+        })
+
+    # 2. Search Customers
+    customers = Customer.objects.filter(name__icontains=query, is_active=True)[:5]
+    for customer in customers:
+        results.append({
+            'label': f"Customer: {customer.name}",
+            'value': customer.name,
+            'category': 'Customer'
+        })
+
+    # 3. Search Warehouses
+    warehouses = Warehouse.objects.filter(name__icontains=query)[:5]
+    for wh in warehouses:
+        results.append({
+            'label': f"Gudang: {wh.name}",
+            'value': wh.name,
+            'category': 'Warehouse'
+        })
+        
+    # 4. Search Products (useful if we want to add product search to sales list later or for other search bars)
+    products = Product.objects.filter(
+        Q(name__icontains=query) | Q(sku__icontains=query),
+        is_active=True
+    )[:5]
+    for product in products:
+        results.append({
+            'label': f"Product: {product.name} ({product.sku})",
+            'value': product.name,
+            'category': 'Product'
+        })
+
+    return JsonResponse({'results': results})
 
 
 # Additional views for managing sales

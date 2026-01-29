@@ -11,7 +11,7 @@
     <div class="col-12 col-md-5">
         <label class="visually-hidden" for="q">Cari</label>
         <div class="input-group">
-            <input type="search" id="q" name="q" class="form-control" placeholder="Cari invoice, customer, atau gudang..." value="{{ q|default:'' }}">
+            <input type="search" id="q" name="q" class="form-control" placeholder="Cari invoice, customer, atau gudang..." value="{{ q|default:'' }}" data-suggestion-url="{% url 'sales:universal_search' %}">
         </div>
     </div>
 

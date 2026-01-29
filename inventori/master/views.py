@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from .models import Category, Product, Customer
 from .forms import CategoryForm, ProductForm, CustomerForm
 
@@ -75,10 +76,20 @@ def product_list(request):
         raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     products = Product.objects.select_related('category').all()
-    paginator = Paginator(products, 20)  # Show 10 products per page
+    
+    # Search filter
+    q = request.GET.get('q', '').strip()
+    if q:
+        products = products.filter(
+            Q(name__icontains=q) | 
+            Q(sku__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+        
+    paginator = Paginator(products, 20)  # Show 20 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'master/product_list.html', {'page_obj': page_obj})
+    return render(request, 'master/product_list.html', {'page_obj': page_obj, 'q': q})
 
 @login_required
 def product_create(request):
@@ -135,10 +146,20 @@ def customer_list(request):
         raise PermissionDenied("Anda tidak memiliki akses ke fitur ini.")
         
     customers = Customer.objects.all()
+    
+    # Search filter
+    q = request.GET.get('q', '').strip()
+    if q:
+        customers = customers.filter(
+            Q(name__icontains=q) | 
+            Q(phone__icontains=q) |
+            Q(email__icontains=q)
+        )
+        
     paginator = Paginator(customers, 10)  # Show 10 customers per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'master/customer_list.html', {'page_obj': page_obj})
+    return render(request, 'master/customer_list.html', {'page_obj': page_obj, 'q': q})
 
 @login_required
 def customer_create(request):

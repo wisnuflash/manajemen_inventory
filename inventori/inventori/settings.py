@@ -23,7 +23,7 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-development-ke
 CSRF_TRUSTED_ORIGINS = [
     'https://maninventory.whatshub.web.id'
 ]
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = [
     'maninventory.whatshub.web.id',
     'localhost',

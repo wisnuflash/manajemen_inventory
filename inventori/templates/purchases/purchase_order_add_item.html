@@ -18,7 +18,21 @@
                 <form method="post" id="addItemForm">
                     {% csrf_token %}
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <!-- Product Search Field (Helper) -->
+                        <div class="col-md-12 mb-3">
+                            <label for="product_search" class="form-label">Cari Produk (Nama / SKU)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="product_search" class="form-control"
+                                    placeholder="Ketik nama produk untuk mencari..." autocomplete="off">
+                                <div id="search_results" class="list-group position-absolute w-100"
+                                    style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto; display: none;">
+                                </div>
+                            </div>
+                            <div class="form-text">Ketik untuk mencari produk, lalu klik untuk memilih.</div>
+                        </div>
+
+                        <div class="col-md-5 mb-3">
                             <label for="{{ form.product_sku.id_for_label }}" class="form-label">SKU Produk</label>
                             {{ form.product_sku }}
                             <div class="invalid-feedback" id="sku-error" style="display: none;"></div>
@@ -27,20 +41,22 @@
                             <label for="{{ form.qty.id_for_label }}" class="form-label">Jumlah</label>
                             {{ form.qty }}
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="{{ form.price.id_for_label }}" class="form-label">Harga</label>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.price.id_for_label }}" class="form-label">Harga Beli (Satuan)</label>
                             {{ form.price }}
                         </div>
-                        
-                        <div class="col-md-12">
-                            <button type="submit" class="btn btn-primary">Tambah ke PO</button>
-                            <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary">Selesai</a>
+
+                        <div class="col-md-12 d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-plus-circle me-1"></i>
+                                Tambah Item</button>
+                            <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-success px-4"><i
+                                    class="bi bi-check-circle me-1"></i> Selesai</a>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
-        
+
         <!-- Current PO Items -->
         <div class="card">
             <div class="card-header">
@@ -70,7 +86,8 @@
                                 <td>Rp {{ item.price|floatformat:0|intcomma }}</td>
                                 <td>Rp {{ item.get_total|floatformat:0|intcomma }}</td>
                                 <td>
-                                    <a href="{% url 'purchases:remove_po_item' item.id %}" class="btn btn-sm btn-outline-danger">Hapus</a>
+                                    <a href="{% url 'purchases:remove_po_item' item.id %}"
+                                        class="btn btn-sm btn-outline-danger">Hapus</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -91,7 +108,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
         <div class="card">
             <div class="card-body">
@@ -113,13 +130,13 @@
                         <td>Status:</td>
                         <td>
                             {% if po.status == 'DRAFT' %}
-                                <span class="badge bg-secondary">{{ po.get_status_display }}</span>
+                            <span class="badge bg-secondary">{{ po.get_status_display }}</span>
                             {% elif po.status == 'SENT' %}
-                                <span class="badge bg-primary">{{ po.get_status_display }}</span>
+                            <span class="badge bg-primary">{{ po.get_status_display }}</span>
                             {% elif po.status == 'RECEIVED' %}
-                                <span class="badge bg-success">{{ po.get_status_display }}</span>
+                            <span class="badge bg-success">{{ po.get_status_display }}</span>
                             {% elif po.status == 'CANCELLED' %}
-                                <span class="badge bg-danger">{{ po.get_status_display }}</span>
+                            <span class="badge bg-danger">{{ po.get_status_display }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -128,10 +145,15 @@
                         <td>Rp {{ total_amount|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
-                
-                <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary w-100">Kembali ke Detail PO</a>
+
+                <a href="{% url 'purchases:purchase_order_detail' po.pk %}" class="btn btn-secondary w-100">Kembali ke
+                    Detail PO</a>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% include 'purchases/po_add_item_script.html' %}
 {% endblock %}

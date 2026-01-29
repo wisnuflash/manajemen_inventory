@@ -1,0 +1,89 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('product_search');
+        const searchResults = document.getElementById('search_results');
+        const skuInput = document.getElementById('product_sku');
+        const priceInput = document.querySelector('#id_price');
+        const qtyInput = document.querySelector('#id_qty');
+        const form = document.getElementById('addItemForm');
+        const errorDiv = document.getElementById('sku-error');
+
+        let debounceTimer;
+
+        // Search functionality
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`{% url 'sales:search_product_ajax' %}?q=${encodeURIComponent(query)}&search_by=name`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.products && data.products.length > 0) {
+                            data.products.forEach(product => {
+                                const item = document.createElement('a');
+                                item.className = 'list-group-item list-group-item-action';
+                                item.href = '#';
+                                item.innerHTML = `
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">${product.name}</h6>
+                                    <small>SKU: ${product.sku}</small>
+                                </div>
+                                <small class="text-muted">Harga: Rp ${parseInt(product.price).toLocaleString()}</small>
+                            `;
+
+                                item.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    selectProduct(product);
+                                });
+
+                                searchResults.appendChild(item);
+                            });
+                            searchResults.style.display = 'block';
+                        } else {
+                            searchResults.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }, 300);
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        function selectProduct(product) {
+            skuInput.value = product.sku;
+            priceInput.value = product.price;
+            searchInput.value = product.name; // Keep the name visible for confirmation
+            searchResults.style.display = 'none';
+            errorDiv.style.display = 'none';
+            qtyInput.focus();
+        }
+
+        // Allow manual SKU entry as well
+        skuInput.addEventListener('blur', function () {
+            const sku = this.value;
+            if (sku && !searchInput.value) { // Only fetch if search input is empty (manual entry)
+                fetch(`{% url 'sales:search_product_ajax' %}?sku=${sku}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            priceInput.value = data.price;
+                            searchInput.value = data.name;
+                            errorDiv.style.display = 'none';
+                        }
+                    });
+            }
+        });
+    });
+</script>
