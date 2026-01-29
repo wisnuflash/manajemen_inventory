@@ -271,6 +271,10 @@
                 class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-box"></i> Produk
             </a>
+            <a href="{% url 'master:customer_list' %}"
+                class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-people"></i> Pelanggan
+            </a>
 
         </div>
         {% endif %}
