@@ -19,17 +19,23 @@
                     {% csrf_token %}
                     <div class="row">
                         <!-- Product Search Field (Helper) -->
-                        <div class="col-md-12 mb-3">
-                            <label for="product_search" class="form-label">Cari Produk (Nama / SKU)</label>
+                        <div class="col-md-12 mb-3 position-relative">
+                            <label for="product_search" class="form-label d-flex justify-content-between mb-1">
+                                <span>Cari Produk (Nama / SKU / Kategori)</span>
+                                <span class="badge bg-light text-primary border"><i class="bi bi-keyboard me-1"></i>Tekan F2 untuk modal katalog</span>
+                            </label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                                 <input type="text" id="product_search" class="form-control"
-                                    placeholder="Ketik nama produk untuk mencari..." autocomplete="off">
-                                <div id="search_results" class="list-group position-absolute w-100"
-                                    style="top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto; display: none;">
-                                </div>
+                                    placeholder="Ketik kata kunci nama, SKU, atau kategori produk..." autocomplete="off">
+                                <button class="btn btn-outline-primary" type="button" id="btnOpenPOLookup" title="Cari Katalog Lengkap (F2)">
+                                    <i class="bi bi-grid-3x3-gap me-1"></i>Cari Lengkap (F2)
+                                </button>
                             </div>
-                            <div class="form-text">Ketik untuk mencari produk, lalu klik untuk memilih.</div>
+                            <div id="search_results" class="list-group position-absolute shadow-lg border w-100"
+                                style="top: 100%; z-index: 1050; max-height: 280px; overflow-y: auto; display: none;">
+                            </div>
+                            <div class="form-text">Pencarian fleksibel multi-kata (contoh: <em>baut 10</em> atau <em>oli matic</em>). Gunakan panah ↑ ↓ dan Enter.</div>
                         </div>
 
                         <div class="col-md-5 mb-3">
@@ -152,6 +158,7 @@
         </div>
     </div>
 </div>
+{% include 'components/product_lookup_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}

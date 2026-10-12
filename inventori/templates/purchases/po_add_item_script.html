@@ -3,87 +3,192 @@
         const searchInput = document.getElementById('product_search');
         const searchResults = document.getElementById('search_results');
         const skuInput = document.getElementById('product_sku');
-        const priceInput = document.querySelector('#id_price');
-        const qtyInput = document.querySelector('#id_qty');
+        const priceInput = document.querySelector('#id_price') || document.getElementById('price');
+        const qtyInput = document.querySelector('#id_qty') || document.getElementById('qty');
         const form = document.getElementById('addItemForm');
         const errorDiv = document.getElementById('sku-error');
+        const btnOpenPOLookup = document.getElementById('btnOpenPOLookup');
+
+        const warehouseId = {{ po.warehouse.id|default:'null' }};
+        const endpoint = `{% url 'sales:search_product_ajax' %}`;
 
         let debounceTimer;
+        let activeSuggestionIndex = -1;
+        let suggestionList = [];
+
+        function selectProduct(product) {
+            if (skuInput) skuInput.value = product.sku;
+            if (priceInput) priceInput.value = product.price;
+            if (searchInput) searchInput.value = `${product.name} (${product.sku})`;
+            if (searchResults) searchResults.style.display = 'none';
+            if (errorDiv) errorDiv.style.display = 'none';
+            activeSuggestionIndex = -1;
+            suggestionList = [];
+
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }
+
+        // Initialize F2 Modal Lookup
+        if (window.ProductLookup) {
+            ProductLookup.init({
+                warehouseId: warehouseId,
+                defaultInStockOnly: false,
+                onSelect: function (prod) {
+                    selectProduct(prod);
+                }
+            });
+        }
+
+        if (btnOpenPOLookup) {
+            btnOpenPOLookup.addEventListener('click', function () {
+                ProductLookup.open(selectProduct);
+            });
+        }
+
+        function highlightSuggestion(index) {
+            const items = searchResults.querySelectorAll('.suggestion-po-item');
+            items.forEach(el => el.classList.remove('active'));
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('active');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
 
         // Search functionality
-        searchInput.addEventListener('input', function () {
-            clearTimeout(debounceTimer);
-            const query = this.value.trim();
+        if (searchInput && searchResults) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
 
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    searchResults.innerHTML = '';
+                    suggestionList = [];
+                    activeSuggestionIndex = -1;
+                    return;
+                }
 
-            debounceTimer = setTimeout(() => {
-                fetch(`{% url 'sales:search_product_ajax' %}?q=${encodeURIComponent(query)}&search_by=name`)
-                    .then(response => response.json())
-                    .then(data => {
-                        searchResults.innerHTML = '';
-                        if (data.products && data.products.length > 0) {
-                            data.products.forEach(product => {
-                                const item = document.createElement('a');
-                                item.className = 'list-group-item list-group-item-action';
-                                item.href = '#';
-                                item.innerHTML = `
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">${product.name}</h6>
-                                    <small>SKU: ${product.sku}</small>
-                                </div>
-                                <small class="text-muted">Harga: Rp ${parseInt(product.price).toLocaleString()}</small>
-                            `;
+                debounceTimer = setTimeout(() => {
+                    const params = new URLSearchParams({
+                        q: query,
+                        limit: '15'
+                    });
+                    if (warehouseId) params.append('warehouse_id', warehouseId);
 
-                                item.addEventListener('click', function (e) {
-                                    e.preventDefault();
-                                    selectProduct(product);
+                    fetch(`${endpoint}?${params.toString()}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            searchResults.innerHTML = '';
+                            suggestionList = data.products || [];
+                            activeSuggestionIndex = -1;
+
+                            if (suggestionList.length > 0) {
+                                suggestionList.forEach((product, idx) => {
+                                    const item = document.createElement('a');
+                                    item.className = 'list-group-item list-group-item-action py-2 px-3 suggestion-po-item';
+                                    item.href = 'javascript:void(0)';
+                                    item.setAttribute('data-index', idx);
+
+                                    const stockBadge = product.stock > 0 
+                                        ? `<span class="badge bg-success-subtle text-success border border-success-subtle">Stok: ${product.stock}</span>`
+                                        : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Stok: 0</span>`;
+
+                                    item.innerHTML = `
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <h6 class="mb-0 text-dark">${escapeHtml(product.name)}</h6>
+                                            <span class="text-primary fw-bold small">Rp ${Number(product.price).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="d-flex w-100 justify-content-between align-items-center mt-1">
+                                            <small class="text-muted"><code>${escapeHtml(product.sku)}</code> &bull; ${escapeHtml(product.category_name || '-')}</small>
+                                            ${stockBadge}
+                                        </div>
+                                    `;
+
+                                    item.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        selectProduct(product);
+                                    });
+
+                                    searchResults.appendChild(item);
                                 });
+                                searchResults.style.display = 'block';
+                            } else {
+                                searchResults.innerHTML = `
+                                    <div class="list-group-item text-muted text-center py-2 small">
+                                        <i class="bi bi-search me-1"></i> Tidak ditemukan. Tekan <kbd>F2</kbd> untuk cari katalog.
+                                    </div>
+                                `;
+                                searchResults.style.display = 'block';
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                }, 250);
+            });
 
-                                searchResults.appendChild(item);
-                            });
-                            searchResults.style.display = 'block';
-                        } else {
-                            searchResults.style.display = 'none';
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            }, 300);
-        });
+            // Keyboard navigation in searchInput
+            searchInput.addEventListener('keydown', function (e) {
+                const isVisible = searchResults.style.display === 'block';
+
+                if (e.key === 'ArrowDown') {
+                    if (isVisible && suggestionList.length > 0) {
+                        e.preventDefault();
+                        activeSuggestionIndex = (activeSuggestionIndex + 1) % suggestionList.length;
+                        highlightSuggestion(activeSuggestionIndex);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    if (isVisible && suggestionList.length > 0) {
+                        e.preventDefault();
+                        activeSuggestionIndex = (activeSuggestionIndex - 1 + suggestionList.length) % suggestionList.length;
+                        highlightSuggestion(activeSuggestionIndex);
+                    }
+                } else if (e.key === 'Enter') {
+                    if (isVisible && activeSuggestionIndex >= 0 && suggestionList[activeSuggestionIndex]) {
+                        e.preventDefault();
+                        selectProduct(suggestionList[activeSuggestionIndex]);
+                    } else if (isVisible && suggestionList.length === 1) {
+                        e.preventDefault();
+                        selectProduct(suggestionList[0]);
+                    }
+                } else if (e.key === 'Escape') {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
 
         // Hide search results when clicking outside
         document.addEventListener('click', function (e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            if (searchInput && searchResults && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
         });
 
-        function selectProduct(product) {
-            skuInput.value = product.sku;
-            priceInput.value = product.price;
-            searchInput.value = product.name; // Keep the name visible for confirmation
-            searchResults.style.display = 'none';
-            errorDiv.style.display = 'none';
-            qtyInput.focus();
+        // Allow manual SKU entry as well
+        if (skuInput) {
+            skuInput.addEventListener('blur', function () {
+                const sku = this.value.trim();
+                if (sku && (!searchInput || !searchInput.value)) {
+                    fetch(`${endpoint}?sku=${encodeURIComponent(sku)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.product) {
+                                selectProduct(data.product);
+                            } else if (data.success && data.name) {
+                                priceInput.value = data.price;
+                                if (searchInput) searchInput.value = data.name;
+                                if (errorDiv) errorDiv.style.display = 'none';
+                            }
+                        });
+                }
+            });
         }
 
-        // Allow manual SKU entry as well
-        skuInput.addEventListener('blur', function () {
-            const sku = this.value;
-            if (sku && !searchInput.value) { // Only fetch if search input is empty (manual entry)
-                fetch(`{% url 'sales:search_product_ajax' %}?sku=${sku}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            priceInput.value = data.price;
-                            searchInput.value = data.name;
-                            errorDiv.style.display = 'none';
-                        }
-                    });
-            }
-        });
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.toString().replace(/[&<>"']/g, m => map[m]);
+        }
     });
 </script>

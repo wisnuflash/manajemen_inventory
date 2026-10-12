@@ -9,8 +9,8 @@ services:
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
       - ./.env:/app/.env
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
     environment:
       - DEBUG=1
       - DATABASE_URL=sqlite:////app/db.sqlite3

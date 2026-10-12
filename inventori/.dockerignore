@@ -1,27 +1,52 @@
+# Python bytecode and caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 .Python
 *.so
 .pytest_cache/
 .coverage
-.git/
+htmlcov/
 .mypy_cache/
-.vscode/
-.idea/
-__pycache__/
-.dbshell
-*.log
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases & backups
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3.bak
+
+# Uploads and static build output
 media/
 staticfiles/
-node_modules/
+
+# IDE and OS files
+.vscode/
+.idea/
 .DS_Store
-.dockerignore
-.gitignore
 *.swp
 *.swo
 *~
+
+# Git and CI
 .git/
 .github/
+.gitignore
+
+# Temporary, data imports, or seed scripts
+*.xlsx
+populate_*.py
+import_*.py
+*.log
+node_modules/
+DOCKER_README.md
 README.md

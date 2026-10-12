@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.core.exceptions import PermissionDenied
 from .models import Sale, SaleItem
 from .forms import POSForm, SaleItemForm
-from master.models import Product, Customer
+from master.models import Product, Customer, Category
 from inventory.models import Stock, StockMove, Warehouse
 from inventory.services import update_stock
 import uuid
@@ -113,28 +113,38 @@ def pos_unified(request, sale_id=None):
                 messages.error(request, 'Tidak ada transaksi aktif')
                 return redirect('sales:pos_unified')
                 
-            product_sku = request.POST.get('product_sku')
-            qty = int(request.POST.get('qty', 1))
+            product_sku = request.POST.get('product_sku', '').strip()
+            try:
+                qty = int(request.POST.get('qty', 1))
+                if qty <= 0:
+                    qty = 1
+            except (ValueError, TypeError):
+                qty = 1
             
             try:
-                product = Product.objects.get(sku=product_sku, is_active=True)
+                product = Product.objects.get(sku__iexact=product_sku, is_active=True)
             except Product.DoesNotExist:
-                messages.error(request, f'Produk dengan SKU {product_sku} tidak ditemukan')
+                messages.error(request, f'Produk dengan Kode/SKU {product_sku} tidak ditemukan')
                 return redirect('sales:pos_unified', sale_id=sale.id)
             
-            # Create sale item
-            item = SaleItem.objects.create(
-                sale=sale,
-                product=product,
-                qty=qty,
-                price=product.price
-            )
+            # Check if product is already in sale_items -> merge qty!
+            item = SaleItem.objects.filter(sale=sale, product=product).first()
+            if item:
+                item.qty += qty
+                item.save()
+            else:
+                item = SaleItem.objects.create(
+                    sale=sale,
+                    product=product,
+                    qty=qty,
+                    price=product.price
+                )
             
-            # Update total amount
-            sale.total_amount += item.get_total()
+            # Update total amount from items
+            sale.total_amount = sum(si.get_total() for si in sale.items.all())
             sale.save()
             
-            messages.success(request, f'{item.qty} {product.name} ditambahkan ke keranjang')
+            messages.success(request, f'{qty}x {product.name} ditambahkan ke keranjang')
             return redirect('sales:pos_unified', sale_id=sale.id)
             
         elif action == 'remove_item':
@@ -376,77 +386,124 @@ def remove_sale_item(request, item_id):
 @csrf_exempt
 def search_product_ajax(request):
     """
-    AJAX endpoint to search for products by SKU or Name (for suggestions)
+    Enhanced AJAX endpoint to search for products by SKU or Name with tokenized multi-keyword search,
+    category filtering, and warehouse stock availability.
     """
     if request.method == 'GET':
         sku = request.GET.get('sku', '').strip()
         search_query = request.GET.get('q', '').strip()
-        warehouse_id = request.GET.get('warehouse_id', '')
-        search_by = request.GET.get('search_by', '')
+        warehouse_id = request.GET.get('warehouse_id', '').strip()
+        category_id = request.GET.get('category_id', '').strip()
+        in_stock_only = request.GET.get('in_stock_only', '').strip().lower() in ['1', 'true']
+        get_categories = request.GET.get('get_categories', '').strip().lower() in ['1', 'true']
+        
+        try:
+            limit = min(int(request.GET.get('limit', 25)), 100)
+        except (ValueError, TypeError):
+            limit = 25
 
-        # Mode 1: Search suggestions (by name or SKU)
-        if search_query and search_by == 'name':
-            products = Product.objects.filter(
-                Q(name__icontains=search_query) | Q(sku__icontains=search_query),
-                is_active=True
-            )[:10]  # Limit to 10 results
-            
-            results = []
-            for product in products:
-                # Get stock for this product
+        categories_data = []
+        if get_categories:
+            categories_data = list(Category.objects.values('id', 'name', 'code').order_by('name'))
+
+        # Helper to get warehouse ID
+        wh_id = None
+        if warehouse_id:
+            try:
+                wh_id = int(warehouse_id)
+            except (ValueError, TypeError):
+                wh_id = None
+
+        # Mode 1: Exact SKU lookup (when user selects or barcode scanner reads SKU)
+        if sku and not search_query:
+            product = Product.objects.filter(sku__iexact=sku, is_active=True).select_related('category').first()
+            if product:
                 stock_qty = 0
-                if warehouse_id:
-                    try:
-                        wh_id = int(warehouse_id)
-                        stock = Stock.objects.filter(product=product, warehouse_id=wh_id).first()
-                        stock_qty = stock.qty if stock else 0
-                    except (ValueError, TypeError):
-                        pass
-                
-                results.append({
+                if wh_id:
+                    stock = Stock.objects.filter(product=product, warehouse_id=wh_id).first()
+                    stock_qty = stock.qty if stock else 0
+
+                prod_dict = {
                     'id': product.id,
                     'name': product.name,
                     'sku': product.sku,
+                    'category_name': product.category.name if product.category else '-',
+                    'uom': product.uom,
                     'price': float(product.price),
-                    'stock': stock_qty
-                })
-            
-            return JsonResponse({
-                'success': True,
-                'products': results
-            })
-            
-        # Mode 2: Exact SKU lookup (when user selects or scans)
-        if sku:
-            try:
-                product = Product.objects.get(sku=sku, is_active=True)
-                # Get the available stock
-                stock_qty = 0
-                if warehouse_id:
-                    try:
-                        warehouse_id = int(warehouse_id)
-                        stock = Stock.objects.filter(
-                            product=product,
-                            warehouse_id=warehouse_id
-                        ).first()
-                        stock_qty = stock.qty if stock else 0
-                    except (ValueError, TypeError):
-                        stock_qty = 0
-                
+                    'stock': stock_qty,
+                    'min_stock': product.min_stock
+                }
                 return JsonResponse({
                     'success': True,
                     'id': product.id,
                     'name': product.name,
                     'price': float(product.price),
                     'stock': stock_qty,
-                    'sku': product.sku
+                    'sku': product.sku,
+                    'product': prod_dict,
+                    'categories': categories_data
                 })
-            except Product.DoesNotExist:
+            else:
                 return JsonResponse({
                     'success': False,
-                    'error': f'Produk dengan Kode {sku} tidak ditemukan'
+                    'error': f'Produk dengan Kode {sku} tidak ditemukan',
+                    'categories': categories_data
                 })
-    
+
+        # Mode 2: Search suggestions or catalog lookup (tokenized multi-word search)
+        qs = Product.objects.filter(is_active=True).select_related('category')
+
+        if category_id:
+            try:
+                qs = qs.filter(category_id=int(category_id))
+            except (ValueError, TypeError):
+                pass
+
+        if search_query:
+            # Tokenized multi-word search (all keywords must match)
+            tokens = search_query.split()
+            for token in tokens:
+                token_q = (
+                    Q(name__icontains=token) |
+                    Q(sku__icontains=token) |
+                    Q(category__name__icontains=token)
+                )
+                qs = qs.filter(token_q)
+
+        # Order and limit
+        products = list(qs.order_by('name')[:limit])
+
+        # Batch query stock for the returned products if warehouse is specified
+        stock_map = {}
+        if wh_id and products:
+            p_ids = [p.id for p in products]
+            stocks = Stock.objects.filter(warehouse_id=wh_id, product_id__in=p_ids)
+            for s in stocks:
+                stock_map[s.product_id] = s.qty
+
+        results = []
+        for p in products:
+            stock_qty = stock_map.get(p.id, 0)
+            if in_stock_only and stock_qty <= 0:
+                continue
+
+            results.append({
+                'id': p.id,
+                'name': p.name,
+                'sku': p.sku,
+                'category_name': p.category.name if p.category else '-',
+                'uom': p.uom,
+                'price': float(p.price),
+                'stock': stock_qty,
+                'min_stock': p.min_stock
+            })
+
+        return JsonResponse({
+            'success': True,
+            'products': results,
+            'categories': categories_data
+        })
+
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 
